@@ -194,7 +194,7 @@ powershell -ExecutionPolicy Bypass -File scripts/build.ps1          # build\bin\
 powershell -ExecutionPolicy Bypass -File scripts/build.ps1 -Installer  # + installer NSIS (butuh makensis)
 powershell -ExecutionPolicy Bypass -File scripts/dev.ps1            # wails dev (hot reload)
 npm --prefix frontend run dev                                       # lalu buka /preview.html: preview karakter tanpa Wails
-go test ./...
+go test ./internal/... ./cmd/...                                    # package main butuh frontend/dist hasil build
 ```
 
 Skrip memakai `go run github.com/wailsapp/wails/v2/cmd/wails@v2.16.0` (Wails CLI v2.9.x gagal membuat

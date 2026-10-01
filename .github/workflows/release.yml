@@ -43,8 +43,9 @@ jobs:
           if (-not (Test-Path "$nsis\makensis.exe")) { choco install nsis -y --no-progress }
           Add-Content $env:GITHUB_PATH $nsis
 
+      # package main embeds frontend/dist, which only exists after the Wails build; it has no tests.
       - name: Test
-        run: go test ./...
+        run: go test ./internal/... ./cmd/...
 
       - name: Build (portable exe + NSIS installer)
         shell: pwsh
