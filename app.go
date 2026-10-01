@@ -32,7 +32,7 @@ import (
 )
 
 // appVersion is overridden at release build time: -ldflags "-X main.appVersion=x.y.z".
-var appVersion = "0.1.0"
+var appVersion = "0.2.0"
 
 // PetState is reported by the frontend (CSS px relative to the overlay).
 type PetState struct {
@@ -216,7 +216,7 @@ func (a *App) domReady(ctx context.Context) {
 func (a *App) beforeClose(ctx context.Context) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return !a.quitting // Alt+F4 on the overlay must not kill the pet; use tray → Keluar
+	return !a.quitting // Alt+F4 on the overlay must not kill the pet; use tray â†’ Keluar
 }
 
 func (a *App) shutdown(ctx context.Context) {
