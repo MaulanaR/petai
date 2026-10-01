@@ -44,6 +44,17 @@ Preview karakter & animasi di browser biasa (tanpa Wails): `npm --prefix fronten
 
 Installer NSIS: `scripts/build.ps1 -Installer` (butuh `makensis` di PATH).
 
+## Cek koneksi AI
+
+Tes key/model/base URL tanpa membuka pet (key dibaca dari Credential Manager, tidak pernah dicetak):
+
+```bash
+go run ./cmd/petai-check -provider openai -model <model> -base <url> -chat "halo!"
+```
+
+Menampilkan: daftar model, balasan chat, dan komentar pet tentang jendela yang sedang aktif
+(`-fg-app code.exe -fg-title "..."` untuk simulasi). `-save` menulis pengaturan yang lolos tes ke config app.
+
 ## Struktur
 
 ```
