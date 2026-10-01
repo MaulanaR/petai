@@ -195,6 +195,7 @@ export namespace brain {
 	    new_animation_request?: AnimReq;
 	    memory_ops: MemoryOp[];
 	    suggestion: string;
+	    activity: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new PetAction(source);
@@ -208,6 +209,7 @@ export namespace brain {
 	        this.new_animation_request = this.convertValues(source["new_animation_request"], AnimReq);
 	        this.memory_ops = this.convertValues(source["memory_ops"], MemoryOp);
 	        this.suggestion = source["suggestion"];
+	        this.activity = source["activity"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
