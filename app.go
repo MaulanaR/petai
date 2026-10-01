@@ -216,7 +216,7 @@ func (a *App) domReady(ctx context.Context) {
 func (a *App) beforeClose(ctx context.Context) bool {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	return !a.quitting // Alt+F4 on the overlay must not kill the pet; use tray â†’ Keluar
+	return !a.quitting // Alt+F4 on the overlay must not kill the pet; use tray → Keluar
 }
 
 func (a *App) shutdown(ctx context.Context) {

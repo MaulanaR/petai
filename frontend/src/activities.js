@@ -56,7 +56,7 @@ export class ActivityRunner {
   }
 
   finish(cur) {
-    this.tasks = []; // drop fire-and-forget tweens (door, puffsâ€¦) of the finished scene
+    this.tasks = []; // drop fire-and-forget tweens (door, puffs…) of the finished scene
     for (const f of cur.cleanups.reverse()) { try { f(); } catch (e) { console.error(e); } }
     this.d.stage.end();
     this.d.setPetHidden(false);
