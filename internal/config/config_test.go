@@ -28,6 +28,20 @@ func TestScreenshotsNeedMasterToggle(t *testing.T) {
 	}
 }
 
+func TestZeroCallsMeansNoAutomaticComments(t *testing.T) {
+	c := Default()
+	c.AI.MaxCallsPerHour = 0
+	c.Normalize()
+	if c.AI.MaxCallsPerHour != 0 {
+		t.Fatal("0 must be preserved")
+	}
+	c.AI.MaxCallsPerHour = -3
+	c.Normalize()
+	if c.AI.MaxCallsPerHour != 12 {
+		t.Fatal("negative must reset to default")
+	}
+}
+
 func TestLoadPartialAndMerge(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "config.json")

@@ -200,8 +200,8 @@ export class Settings {
             </label>
           </details>
           <div class="row"><button class="btn" data-act="test">Tes koneksi</button><span class="test-out"></span></div>
-          <label>Seberapa cerewet: maks <b>${c.ai.maxCallsPerHour}</b> komentar otomatis / jam
-            <input type="range" min="1" max="60" step="1" data-k="ai.maxCallsPerHour" data-num value="${c.ai.maxCallsPerHour}">
+          <label>Seberapa cerewet: maks <b>${c.ai.maxCallsPerHour}</b> komentar otomatis / jam <small>(0 = hanya saat diajak ngobrol)</small>
+            <input type="range" min="0" max="60" step="1" data-k="ai.maxCallsPerHour" data-num value="${c.ai.maxCallsPerHour}">
           </label>
           <p class="note">Biaya API ditanggung akunmu sendiri. Model kecil (mis. claude-haiku-4-5) lebih hemat; Opus paling pintar.</p>`;
       }

@@ -14,6 +14,7 @@ func TestRedact(t *testing.T) {
 		"key sk-ant-api03-abcdefghijklmnop in terminal": "key [secret] in terminal",
 		"main.go - petai - Visual Studio Code":          "main.go - petai - Visual Studio Code",
 		"Room 12345":                                    "Room 12345",
+		`C:\Users\maula\Documents\cv.docx - Word`:       `C:\Users\[user]\Documents\cv.docx - Word`,
 	}
 	for in, want := range cases {
 		if got := Redact(in); got != want {

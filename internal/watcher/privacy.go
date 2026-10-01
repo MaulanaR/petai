@@ -11,11 +11,13 @@ var (
 	reURLQ   = regexp.MustCompile(`(https?://[^\s?#]+)[?#][^\s]*`)
 	reHexTok = regexp.MustCompile(`\b[A-Fa-f0-9]{24,}\b`)
 	reKeyTok = regexp.MustCompile(`\b(sk|pk|rk|ghp|gho|xox[abp])[-_][A-Za-z0-9_\-]{8,}\b`)
+	reUser   = regexp.MustCompile(`(?i)([a-z]:[\\/](?:users|documents and settings)[\\/])[^\\/\s]+`)
 )
 
 // Redact strips personal identifiers from a window title before it is stored or sent to an AI.
 func Redact(title string) string {
 	t := reKeyTok.ReplaceAllString(title, "[secret]")
+	t = reUser.ReplaceAllString(t, "${1}[user]")
 	t = reEmail.ReplaceAllString(t, "[email]")
 	t = reURLQ.ReplaceAllString(t, "$1")
 	t = reHexTok.ReplaceAllString(t, "[id]")

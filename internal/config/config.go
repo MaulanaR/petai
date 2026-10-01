@@ -71,7 +71,9 @@ var DefaultBlocklist = []string{
 	"1password", "bitwarden", "keepass", "lastpass", "dashlane", "inprivate", "incognito",
 	"bank", "bca", "mandiri", "bri", "bni", "klikbca", "mybca", "livin", "brimo", "ocbc", "cimb",
 	"danamon", "permata", "jenius", "seabank", "paypal", "wise.com", "gopay", "ovo", "dana",
-	"windows security", "credential", "password",
+	"windows security", "credential", "password", "consent.exe", "credentialuibroker",
+	"proton pass", "nordpass", "enpass", "roboform", "keeper", "authy", "authenticator",
+	"whatsapp", "telegram", "signal", "line.exe", "messenger",
 }
 
 var Characters = []string{"blob", "cat", "chick"}
@@ -143,7 +145,8 @@ func (c *Config) Normalize() {
 	if strings.TrimSpace(c.AI.Anthropic.Model) == "" {
 		c.AI.Anthropic.Model = DefaultAnthropicModel
 	}
-	if c.AI.MaxCallsPerHour <= 0 || c.AI.MaxCallsPerHour > 120 {
+	// 0 = no automatic comments (chat still works).
+	if c.AI.MaxCallsPerHour < 0 || c.AI.MaxCallsPerHour > 120 {
 		c.AI.MaxCallsPerHour = d.AI.MaxCallsPerHour
 	}
 	if c.Privacy.ScreenshotIntervalMin < 1 {

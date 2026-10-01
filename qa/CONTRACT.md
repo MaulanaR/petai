@@ -135,6 +135,27 @@ Never executed as code.
 Built-in animations (always present, `builtin:true`, target `generic`):
 `idle, walk, float, sleep, jump, wave, happy_bounce, surprised, dangle, fall, land, sit, look_around`.
 
+## Clarifications (answers to QA Phase 1 gaps)
+- Base URLs: both forms work. Anthropic: a trailing `/v1` is stripped (SDK adds it). OpenAI-compatible:
+  if the base does not end in `/vN` the app appends `/v1` (`http://h:p/openai` → `/openai/v1/chat/completions`;
+  `https://openrouter.ai/api/v1` used as-is).
+- `ai.maxCallsPerHour = 0` → no automatic comments at all (chat and debug triggers still work); valid range 0–120.
+- Only automatic occasions count toward the budget. Chat and `/debug/trigger` / `/debug/chat` are not counted.
+  SDK-internal retries count as one call. Occasions that fail before reaching a provider (no key) are not counted.
+- `PETAI_FAST=1` divides every duration by 60, including the rolling budget window (1 h → 60 s) and min gap (3 min → 3 s).
+- `/debug/trigger` bypasses: rate limit, min gap, cooldowns, screenshot interval and DND. It does NOT bypass
+  privacy toggles or the blocklist.
+- Blocklist: case-insensitive; matched against the bare exe name (substring) and the window title
+  (substring; entries of ≤3 chars match title only as a whole word). `activity.app` is the bare lower-case
+  exe name (never a path).
+- Redaction also replaces API-key-like tokens (`[secret]`), long hex ids (`[id]`), URL query strings
+  (stripped) and `X:\Users\<name>` (`[user]`). Titles are truncated to 160 chars.
+- New-animation dedup: the saved spec name is always the requested (slugged) name; concurrent requests
+  for the same name generate once.
+- Default `pet.language` is `id`. The frontend never receives raw keys (only masked hints).
+- WebView2 profile lives in `<data>/webview`. "Hapus semua data" wipes activity, memories and chat
+  (not config, keys or animations).
+
 ## Behavior expectations (black-box)
 - Pet is visible, cute toon/doodle style, rendered with three.js; ≥3 characters selectable (blob, cat, chick).
 - Movement modes: `stay` (pet stays at anchor, only in-place animation), `ground` (walks along the
