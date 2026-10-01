@@ -15,6 +15,23 @@ type PetAction struct {
 	Suggestion          string     `json:"suggestion"`
 	// Activity starts a scripted prop activity ("" = none).
 	Activity string `json:"activity"`
+	// Heard is the transcript of the user's spoken message (voice turns only).
+	Heard string `json:"heard"`
+	// EndVoice: the user wants to stop the voice conversation.
+	EndVoice bool `json:"end_voice"`
+	// OpenApp asks the app to open one of the user's whitelisted apps.
+	OpenApp *OpenApp `json:"open_app"`
+}
+
+type OpenApp struct {
+	AppID    string   `json:"app_id"`
+	Query    string   `json:"query"`
+	Document *OpenDoc `json:"document"`
+}
+
+type OpenDoc struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }
 
 // Activities are scripted mini-scenes with props, played by the frontend.
@@ -80,7 +97,25 @@ var PetActionSchema = mustJSON(obj(map[string]any{
 	"memory_ops": map[string]any{"type": "array", "items": memoryOpSchema()},
 	"suggestion": map[string]any{"type": "string", "description": "short practical suggestion, or ''"},
 	"activity":   strEnum(append([]string{""}, Activities...)...),
-}, "speech", "mood", "animation", "new_animation_request", "memory_ops", "suggestion", "activity"))
+	"heard":      map[string]any{"type": "string", "description": "voice turns: exact transcript of the user's audio; otherwise ''"},
+	"end_voice":  map[string]any{"type": "boolean", "description": "true when the user wants to end the voice conversation"},
+	"open_app": map[string]any{
+		"anyOf": []any{
+			obj(map[string]any{
+				"app_id": map[string]any{"type": "string", "description": "id from the user's app list"},
+				"query":  map[string]any{"type": "string", "description": "search text for apps with {query}, else ''"},
+				"document": map[string]any{"anyOf": []any{
+					obj(map[string]any{
+						"title":   map[string]any{"type": "string"},
+						"content": map[string]any{"type": "string", "description": "markdown-lite: '# ', '## ', '- ' bullets, plain lines"},
+					}, "title", "content"),
+					map[string]any{"type": "null"},
+				}},
+			}, "app_id", "query", "document"),
+			map[string]any{"type": "null"},
+		},
+	},
+}, "speech", "mood", "animation", "new_animation_request", "memory_ops", "suggestion", "activity", "heard", "end_voice", "open_app"))
 
 var MemoryOpsSchema = mustJSON(obj(map[string]any{
 	"memory_ops": map[string]any{"type": "array", "items": memoryOpSchema()},
@@ -150,6 +185,17 @@ func (a *PetAction) Sanitize() {
 	}
 	if !known {
 		a.Activity = ""
+	}
+	a.Heard = clip(strings.TrimSpace(a.Heard), 1000)
+	if a.OpenApp != nil {
+		a.OpenApp.AppID = strings.TrimSpace(a.OpenApp.AppID)
+		a.OpenApp.Query = clip(strings.TrimSpace(a.OpenApp.Query), 300)
+		if a.OpenApp.AppID == "" {
+			a.OpenApp = nil
+		} else if d := a.OpenApp.Document; d != nil {
+			d.Title = clip(strings.TrimSpace(d.Title), 120)
+			d.Content = clip(d.Content, 20000)
+		}
 	}
 }
 

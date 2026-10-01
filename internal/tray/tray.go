@@ -10,6 +10,7 @@ import (
 type Actions struct {
 	ToggleVisible func() (visible bool)
 	OpenChat      func()
+	OpenVoice     func()
 	OpenSettings  func()
 	TogglePause   func() (paused bool)
 	HideHour      func()
@@ -35,7 +36,8 @@ func onReady(icon []byte, a Actions) {
 	systray.SetOnDClick(func(systray.IMenu) { a.OpenSettings() })
 
 	show := systray.AddMenuItem("Sembunyikan pet", "Tampilkan / sembunyikan pet")
-	chat := systray.AddMenuItem("Ajak ngobrol…", "Buka chat (Ctrl+Alt+P)")
+	voiceItem := systray.AddMenuItem("Ngobrol pakai suara…", "Mode voice (Ctrl+Alt+V) — bila model mendukung audio")
+	chat := systray.AddMenuItem("Ajak ngobrol (ketik)…", "Buka chat teks (Ctrl+Alt+P)")
 	settings := systray.AddMenuItem("Pengaturan…", "Buka pengaturan")
 	systray.AddSeparator()
 	pause := systray.AddMenuItemCheckbox("Pause pengamatan", "Hentikan sementara pengamatan aktivitas", false)
@@ -51,6 +53,7 @@ func onReady(icon []byte, a Actions) {
 		}
 	})
 	chat.Click(a.OpenChat)
+	voiceItem.Click(a.OpenVoice)
 	settings.Click(a.OpenSettings)
 	pause.Click(func() {
 		if a.TogglePause() {

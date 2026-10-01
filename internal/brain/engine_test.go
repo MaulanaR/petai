@@ -253,6 +253,52 @@ func TestAIDisabledBlocksEveryPath(t *testing.T) {
 	}
 }
 
+func TestVoiceTurnUsesVoiceModelAndOpensApp(t *testing.T) {
+	e, mainProv, _, cm, _, st := setup(t, "")
+	_, _ = cm.Merge([]byte(`{"launcher":{"apps":[{"id":"word","name":"Microsoft Word","kind":"program","target":"C:\\w.exe","accepts":"docx"}]}}`))
+	voiceProv := &fakeProv{action: `{"speech":"Siap, Word kubuka!","mood":"happy","animation":"","new_animation_request":null,"memory_ops":[],"suggestion":"","activity":"","heard":"Tolong buka Word, catat notulensi, email a@b.co","end_voice":false,"open_app":{"app_id":"word","query":"","document":{"title":"Notulensi Meeting","content":"## Peserta\n- ..."}}}`}
+	e.d.VoiceProvider = func(config.Config) (ai.Provider, error) { return voiceProv, nil }
+	var opened []OpenApp
+	e.d.OpenApp = func(r OpenApp) { opened = append(opened, r) }
+
+	act, err := e.Voice(context.Background(), []byte("RIFF....WAVE"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(voiceProv.reqs) != 1 || len(mainProv.reqs) != 0 {
+		t.Fatalf("voice turn must go to the voice model (voice=%d main=%d)", len(voiceProv.reqs), len(mainProv.reqs))
+	}
+	req := voiceProv.last()
+	if len(req.Audio) == 0 || !strings.Contains(req.System[1], "- word: Microsoft Word (program, opens a prepared docx document)") {
+		t.Fatalf("audio or app list missing: audio=%d system=%q", len(req.Audio), req.System[1])
+	}
+	if ctxOf(t, req)["occasion"] != "voice" {
+		t.Fatal("occasion must be voice")
+	}
+	if len(opened) != 1 || opened[0].AppID != "word" || opened[0].Document == nil {
+		t.Fatalf("open_app not executed: %+v", opened)
+	}
+	if strings.Contains(act.Heard, "@") {
+		t.Fatal("transcript must be redacted")
+	}
+	chat, _ := st.RecentChat(5)
+	if len(chat) != 2 || chat[0].Role != "user" || !strings.HasPrefix(chat[0].Text, "Tolong buka Word") {
+		t.Fatalf("chat history %+v", chat)
+	}
+}
+
+func TestHeardIgnoredOutsideVoice(t *testing.T) {
+	e, fp, _, _, _, _ := setup(t, "")
+	fp.action = `{"speech":"hai","mood":"happy","animation":"","new_animation_request":null,"memory_ops":[],"suggestion":"","activity":"","heard":"spoofed","end_voice":true,"open_app":null}`
+	act, err := e.Chat(context.Background(), "halo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if act.Heard != "" || act.EndVoice {
+		t.Fatal("heard/end_voice must only apply to voice turns")
+	}
+}
+
 func TestSanitizeActivity(t *testing.T) {
 	a := PetAction{Activity: "golf"}
 	a.Sanitize()
@@ -275,5 +321,18 @@ func TestSchemasAreValidJSON(t *testing.T) {
 		if err := json.Unmarshal(s, &m); err != nil || m["additionalProperties"] != false {
 			t.Fatal("bad schema")
 		}
+	}
+}
+
+func TestNoAutomaticCommentsWhileTalking(t *testing.T) {
+	e, _, ck, _, _, _ := setup(t, `{"ai":{"maxCallsPerHour":2}}`)
+	ck.add(time.Second)
+	e.SetTalking(true)
+	if occ := e.Decide(); occ != "" {
+		t.Fatalf("voice conversation running, want no occasion, got %q", occ)
+	}
+	e.SetTalking(false)
+	if occ := e.Decide(); occ != "greet" {
+		t.Fatalf("want greet after talking, got %q", occ)
 	}
 }

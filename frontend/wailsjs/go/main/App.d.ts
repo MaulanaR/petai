@@ -3,15 +3,20 @@
 import {store} from '../models';
 import {brain} from '../models';
 import {anim} from '../models';
+import {config} from '../models';
 import {main} from '../models';
 import {overlay} from '../models';
-import {config} from '../models';
+import {launcher} from '../models';
 
 export function ActivitySummary():Promise<store.Stats>;
 
 export function AddMemory(arg1:string,arg2:string):Promise<void>;
 
 export function Chat(arg1:string):Promise<brain.PetAction>;
+
+export function ConfirmLaunch(arg1:string,arg2:boolean):Promise<void>;
+
+export function DefaultDocsFolder():Promise<string>;
 
 export function DeleteAnimation(arg1:string,arg2:string):Promise<void>;
 
@@ -21,9 +26,13 @@ export function ExportAnimation(arg1:string,arg2:string):Promise<string>;
 
 export function GetAnimations(arg1:string):Promise<Array<anim.Spec>>;
 
+export function GetAppPresets():Promise<Array<config.App>>;
+
 export function GetBootstrap():Promise<main.Bootstrap>;
 
 export function GetMonitor():Promise<overlay.Monitor>;
+
+export function GetVoiceInfo():Promise<main.VoiceInfo>;
 
 export function HideFor(arg1:number):Promise<void>;
 
@@ -33,13 +42,19 @@ export function ListAllAnimations():Promise<Array<anim.Meta>>;
 
 export function ListMemories():Promise<Array<store.Memory>>;
 
+export function ListStartMenuApps():Promise<Array<launcher.Shortcut>>;
+
 export function LogFrontend(arg1:string):Promise<void>;
 
 export function OpenDataFolder():Promise<void>;
 
 export function PetClicked(arg1:number):Promise<void>;
 
+export function PickProgram():Promise<string>;
+
 export function Quit():Promise<void>;
+
+export function RecheckVoice():Promise<main.VoiceInfo>;
 
 export function ReportPetState(arg1:main.PetState):Promise<void>;
 
@@ -53,9 +68,19 @@ export function SetForceInteractive(arg1:boolean):Promise<void>;
 
 export function SetHitRegions(arg1:Array<overlay.Rect>):Promise<void>;
 
+export function StartVoice():Promise<string>;
+
+export function StopVoice():Promise<void>;
+
+export function TestLaunch(arg1:config.App):Promise<string>;
+
+export function TestMic(arg1:number):Promise<main.MicTest>;
+
 export function TestProvider(arg1:string,arg2:string):Promise<main.TestResult>;
 
 export function UpdateMemory(arg1:number,arg2:string,arg3:string):Promise<void>;
+
+export function VoiceSpoken():Promise<void>;
 
 export function WipeAllData():Promise<void>;
 

@@ -4,8 +4,10 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 )
@@ -38,6 +40,45 @@ type AI struct {
 	Anthropic       ProviderCfg `json:"anthropic"`
 	OpenAI          ProviderCfg `json:"openai"`
 	MaxCallsPerHour int         `json:"maxCallsPerHour"`
+	Voice           Voice       `json:"voice"`
+}
+
+// Voice settings plus the result of the last audio capability check (see internal/voice).
+type Voice struct {
+	Enabled bool `json:"enabled"` // user toggle; only effective when Supported
+	// Model used for voice turns ("" = the main chat model of the selected provider).
+	Model string `json:"model"`
+	// Capability check result, valid for Key = "<provider>|<baseURL>|<model>".
+	Supported bool     `json:"supported"`
+	Key       string   `json:"key"`
+	CheckedAt string   `json:"checkedAt"`
+	Error     string   `json:"error"`
+	Suggest   []string `json:"suggest"`
+
+	SilenceMs  int     `json:"silenceMs"`
+	Continuous bool    `json:"continuous"`
+	TTSVoice   string  `json:"ttsVoice"` // "" = best voice for the pet language
+	TTSPitch   float64 `json:"ttsPitch"`
+	TTSRate    float64 `json:"ttsRate"`
+	SpeakAuto  bool    `json:"speakAuto"` // also read automatic comments aloud
+}
+
+// App is an entry the pet may open on request. Paths/args only ever come from here (never from the AI).
+type App struct {
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	Aliases   []string `json:"aliases"`
+	Kind      string   `json:"kind"`    // program | website | path
+	Target    string   `json:"target"`  // exe/.lnk path, URL (may contain {query}), or file/folder
+	Args      string   `json:"args"`    // extra program arguments
+	Accepts   string   `json:"accepts"` // none | docx | txt — document the pet can prepare
+	Clipboard bool     `json:"clipboard"`
+}
+
+type Launcher struct {
+	Apps       []App  `json:"apps"`
+	Confirm    bool   `json:"confirm"`
+	DocsFolder string `json:"docsFolder"` // "" = Documents\PetAI
 }
 
 type Privacy struct {
@@ -64,6 +105,7 @@ type Config struct {
 	AI       AI       `json:"ai"`
 	Privacy  Privacy  `json:"privacy"`
 	General  General  `json:"general"`
+	Launcher Launcher `json:"launcher"`
 }
 
 const DefaultAnthropicModel = "claude-opus-5-5"
@@ -97,7 +139,11 @@ func Default() Config {
 			Anthropic:       ProviderCfg{Model: DefaultAnthropicModel},
 			OpenAI:          ProviderCfg{},
 			MaxCallsPerHour: 12,
+			Voice: Voice{
+				Enabled: true, SilenceMs: 1000, Continuous: true, TTSPitch: 1.3, TTSRate: 1.05, Suggest: []string{},
+			},
 		},
+		Launcher: Launcher{Apps: []App{}},
 		Privacy: Privacy{
 			WatchActivity:         false,
 			Screenshots:           false,
@@ -172,6 +218,91 @@ func (c *Config) Normalize() {
 	if c.General.Monitor < 0 {
 		c.General.Monitor = 0
 	}
+	v := &c.AI.Voice
+	if v.SilenceMs < 400 || v.SilenceMs > 4000 {
+		v.SilenceMs = 1000
+	}
+	v.TTSPitch = clamp(v.TTSPitch, 0.5, 2, 1.3)
+	v.TTSRate = clamp(v.TTSRate, 0.5, 2, 1.05)
+	v.Model = strings.TrimSpace(v.Model)
+	if v.Suggest == nil {
+		v.Suggest = []string{}
+	}
+	c.Launcher.Apps = normalizeApps(c.Launcher.Apps)
+}
+
+var nonID = regexp.MustCompile(`[^a-z0-9_]+`)
+
+func normalizeApps(apps []App) []App {
+	out := make([]App, 0, len(apps))
+	seen := map[string]bool{}
+	for _, a := range apps {
+		a.Name = strings.TrimSpace(a.Name)
+		a.Target = strings.TrimSpace(a.Target)
+		if a.Name == "" || a.Target == "" {
+			continue
+		}
+		if len(a.Name) > 40 {
+			a.Name = a.Name[:40]
+		}
+		id := strings.Trim(nonID.ReplaceAllString(strings.ToLower(strings.TrimSpace(a.ID)), "_"), "_")
+		if id == "" {
+			id = strings.Trim(nonID.ReplaceAllString(strings.ToLower(a.Name), "_"), "_")
+		}
+		if id == "" {
+			id = "app"
+		}
+		base := id
+		for i := 2; seen[id]; i++ {
+			id = fmt.Sprintf("%s_%d", base, i)
+		}
+		seen[id] = true
+		a.ID = id
+		switch a.Kind {
+		case "program", "website", "path":
+		default:
+			if strings.HasPrefix(strings.ToLower(a.Target), "http://") || strings.HasPrefix(strings.ToLower(a.Target), "https://") {
+				a.Kind = "website"
+			} else {
+				a.Kind = "program"
+			}
+		}
+		switch a.Accepts {
+		case "docx", "txt":
+		default:
+			a.Accepts = "none"
+		}
+		clean := a.Aliases[:0:0]
+		for _, al := range a.Aliases {
+			if al = strings.TrimSpace(al); al != "" && len(clean) < 8 {
+				clean = append(clean, al)
+			}
+		}
+		a.Aliases = clean
+		out = append(out, a)
+		if len(out) >= 40 {
+			break
+		}
+	}
+	return out
+}
+
+// VoiceKey identifies the provider/endpoint/model a voice capability result belongs to.
+func (c Config) VoiceKey(effectiveBaseURL string) string {
+	model := c.AI.Voice.Model
+	if model == "" {
+		if c.AI.Provider == "openai" {
+			model = c.AI.OpenAI.Model
+		} else {
+			model = c.AI.Anthropic.Model
+		}
+	}
+	return c.AI.Provider + "|" + strings.TrimSuffix(effectiveBaseURL, "/") + "|" + model
+}
+
+// VoiceReady reports whether double-click should start voice mode.
+func (c Config) VoiceReady(key string) bool {
+	return c.AI.Enabled && c.AI.Voice.Enabled && c.AI.Voice.Supported && c.AI.Voice.Key == key
 }
 
 // ScreenshotsEffective reports whether screenshots may be captured (requires the master watch toggle).
@@ -234,6 +365,8 @@ func (m *Manager) Get() Config {
 	defer m.mu.RUnlock()
 	c := m.cfg
 	c.Privacy.Blocklist = append([]string(nil), m.cfg.Privacy.Blocklist...)
+	c.Launcher.Apps = append([]App(nil), m.cfg.Launcher.Apps...)
+	c.AI.Voice.Suggest = append([]string(nil), m.cfg.AI.Voice.Suggest...)
 	return c
 }
 

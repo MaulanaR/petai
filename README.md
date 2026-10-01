@@ -26,6 +26,8 @@
 | <img src="docs/demo-characters.gif" width="360" alt="Tiga karakter"> | <img src="docs/demo-interact.gif" width="400" alt="Interaksi"> |
 | **"Mochi, joget dong!"** — gerakan dirancang AI | **Aktivitas acak:** mules → toilet 🚽 |
 | <img src="docs/act-dance.gif" width="300" alt="Joget hasil rancangan AI"> | <img src="docs/act-toilet.gif" width="360" alt="Toilet"> |
+| **🎙️ Ngobrol pakai suara** — "Tolong buka Word, catat notulensi meeting" | **🚀 Aplikasi yang boleh dibuka pet** |
+| <img src="docs/voice-mode.png" width="400" alt="Mode suara"> | <img src="docs/settings-apps.png" width="330" alt="Daftar aplikasi"> |
 
 ---
 
@@ -36,6 +38,8 @@
 - [Mulai cepat (5 menit)](#mulai-cepat-5-menit)
 - [Cara berinteraksi](#cara-berinteraksi)
 - [Aktivitas & perintah gerakan](#aktivitas--perintah-gerakan)
+- [Ngobrol pakai suara](#ngobrol-pakai-suara)
+- [Menyuruh pet membuka aplikasi](#menyuruh-pet-membuka-aplikasi)
 - [Mode gerak](#mode-gerak)
 - [Menghubungkan AI (BYOK)](#menghubungkan-ai-byok)
 - [Kapan pet berkomentar](#kapan-pet-berkomentar)
@@ -52,7 +56,12 @@
 - **3 karakter** — 🫧 Blob Jeli, 🐱 Kucing, 🐥 Anak Ayam. Nama, warna, kepribadian, ukuran bisa diubah.
 - **3 mode gerak** — 📍 diam di satu tempat · 🚶 jalan-jalan di atas taskbar & nangkring di atas jendela ·
   🎈 melayang bebas.
-- **Interaktif** — klik, klik ganda untuk chat, seret & lempar, elus, menu klik kanan.
+- **Interaktif** — klik, klik ganda untuk chat (atau ngobrol pakai suara), seret & lempar, elus, menu klik kanan.
+- **Ngobrol pakai suara** — klik 2× pet lalu bicara; pet menjawab dengan suara (Microsoft Andika) sambil
+  mulutnya bergerak. Aktif otomatis **hanya jika model AI-mu bisa mendengar audio** — PetAI mengetesnya
+  setiap kali kamu mengganti model. Kalau tidak bisa, klik 2× tetap membuka chat teks.
+- **Bisa membuka aplikasi** — daftar aplikasi pilihanmu (Notepad, Word, Google Docs, Google Search…).
+  "Buka Word, catat notulensi meeting hari ini" → Word terbuka dengan template notulensi siap ketik.
 - **AI milikmu sendiri** — Anthropic (Claude) atau OpenAI / endpoint kompatibel OpenAI. Key tersimpan aman
   di Windows Credential Manager.
 - **Peka aktivitas (opsional)** — pet bisa melihat aplikasi & judul jendela yang aktif lalu memberi
@@ -92,12 +101,13 @@ Butuh **Windows 10/11 64-bit**. Unduh dari [Releases](https://github.com/Maulana
 | Aksi | Hasil |
 |---|---|
 | **Klik** pet | Reaksi lucu (lompat, kaget, melambai); kadang menyeletuk |
-| **Klik ganda** pet | Buka chat. Ketik lalu **Enter**; **Esc** untuk menutup |
+| **Klik ganda** pet | **Mode suara** bila model AI-mu bisa mendengar audio, selain itu buka chat teks. Di chat: ketik lalu **Enter**; **Esc** untuk menutup |
 | **Seret** pet | Pet terangkat & menggantung; lepas → jatuh (mode jalan) atau pindah posisi (mode diam/melayang). Bisa dilempar! |
 | **Gosok kursor** di atas pet | Dielus → mata hati & ❤️ |
 | **Klik kanan** pet | Menu cepat: chat, tidur/bangun, mode gerak, **main ⚽🏀⛳🚽**, ganti karakter, pengaturan, sembunyikan 1 jam, keluar |
 | **Ikon tray** | Tampilkan/sembunyikan, chat, pengaturan, *Pause pengamatan*, sembunyikan 1 jam, keluar |
-| **`Ctrl+Alt+P`** | Buka chat dari mana saja |
+| **`Ctrl+Alt+P`** | Buka chat (ketik) dari mana saja |
+| **`Ctrl+Alt+V`** | Mulai ngobrol pakai suara dari mana saja |
 
 Pet juga punya kehidupan sendiri: berkedip, menatap kursor, jalan-jalan, duduk, dan **tidur** saat kamu
 tidak menyentuh PC lebih dari 5 menit — lalu bangun menyapa saat kamu kembali.
@@ -134,6 +144,56 @@ tempatnya setelah selesai; di mode *Melayang*, ia turun dulu ke lantai.
   langsung memperagakannya. Lama merancang tergantung model (umumnya 10–60 detik), **cukup sekali** —
   gerakan tersimpan di *Pengaturan → 🎞️ Animasi* dan berikutnya langsung dipakai.
 
+## Ngobrol pakai suara
+
+<p align="center"><img src="docs/voice-mode.png" width="520" alt="Mode suara: mendengarkan, lalu menjawab"></p>
+
+1. **Cek dukungan model** — *Pengaturan → 🎙️ Voice*. Setiap kali provider, base URL, model, atau API key
+   berubah, PetAI mengirim satu rekaman pendek bawaan ("satu, dua, tiga" — **bukan suaramu**) ke model.
+   - ✅ *bisa mendengar* → klik 2× pet = mode suara.
+   - ❌ *tidak menerima audio* → klik 2× tetap chat teks. Isi **Model untuk suara** dengan model lain
+     yang mendukung audio (bila endpoint-mu menyebutkannya, PetAI menampilkannya sebagai pilihan cepat).
+     Chat teks tetap memakai model utama.
+2. **Klik 2× pet** (atau `Ctrl+Alt+V`, atau tray → *Ngobrol pakai suara*). Titik merah = mikrofon aktif.
+   Bicara saja — jeda ±1 detik dianggap selesai bicara.
+3. Pet berpikir ("Hmm…"), lalu menjawab dengan suara. Kalimatmu tampil di bubble. Setelah menjawab ia
+   mendengarkan lagi (*percakapan bersambung*, bisa dimatikan).
+4. **Selesai**: ✖ di bubble, `Esc`, klik pet, bilang "udah ya / dadah", atau diam 30 detik.
+   Klik pet **saat ia bicara** untuk memotong. Tombol ⌨ pindah ke chat teks.
+
+Yang bisa diatur di tab 🎙️ Voice: tes ulang, model untuk suara, tes mikrofon, jeda diam, suara TTS
+(default *Microsoft Andika* untuk Bahasa Indonesia), nada & kecepatan, dan *bacakan juga komentar otomatis*.
+
+> Mikrofon **hanya** menyala selama mode suara. Rekaman tidak disimpan ke disk — hanya dikirim ke provider
+> AI-mu. Model Claude (Anthropic) saat ini tidak menerima audio, jadi mode suara memakai endpoint
+> OpenAI / kompatibel OpenAI dengan model yang mendukung `input_audio`.
+
+<p align="center"><img src="docs/settings-voice.png" width="440" alt="Pengaturan Voice"></p>
+
+## Menyuruh pet membuka aplikasi
+
+Pet **hanya** bisa membuka aplikasi yang kamu daftarkan di *Pengaturan → 🚀 Aplikasi* — lewat chat
+maupun suara:
+
+| Kamu bilang | Yang terjadi |
+|---|---|
+| "Tolong buka Word, catat notulensi meeting hari ini" | File `Notulensi Meeting - <hari, tanggal>.docx` berisi template (Waktu & Tempat, Peserta, Agenda, Pembahasan, Keputusan, Action Items) dibuat di `Documents\PetAI`, lalu dibuka di Word |
+| "Buka notepad, bikin daftar belanja" | `.txt` siap ketik di Notepad |
+| "Buka Google Docs, catat notulensi" | `docs.new` terbuka, template disalin ke clipboard → tinggal **Ctrl+V** |
+| "Cari resep rendang di Google" | Tab pencarian Google |
+| "Buka Spotify" (belum didaftarkan) | Pet menolak dengan sopan dan menyarankan menambahkannya |
+
+Menambah aplikasi:
+- **Tambah cepat** — Notepad, Microsoft Word (dideteksi otomatis), Google Docs, Google Search, YouTube, Kalkulator.
+- **📋 Pilih dari Start Menu** — semua shortcut aplikasi yang terpasang.
+- **➕ Tambah manual** — nama, jenis (*program* / *website* / *file-folder*), target (Browse… untuk `.exe`/`.lnk`;
+  URL boleh memakai `{query}`), argumen, nama panggilan lain, dokumen yang bisa disiapkan (`.docx` / `.txt`),
+  dan *salin template ke clipboard* (untuk aplikasi web).
+- ▶ untuk mencoba membuka. Nyalakan *Tanya dulu sebelum membuka aplikasi* bila ingin konfirmasi ✔/✖ di bubble.
+
+AI hanya menyebut **id** aplikasi; path dan argumen selalu dari daftarmu, query di-escape, dan dokumen hanya
+ditulis ke folder dokumen (default `Documents\PetAI`).
+
 ## Mode gerak
 
 | Mode | Perilaku |
@@ -159,7 +219,8 @@ Tips hemat: pakai model kecil untuk obrolan sehari-hari dan turunkan slider **"S
 (0 = pet hanya bicara saat diajak). Model harus mendukung *structured output / JSON schema*.
 
 Cek koneksi tanpa membuka pet (butuh Go): `go run ./cmd/petai-check -provider openai -model <model> -base <url>`
-— menampilkan daftar model, balasan chat, dan contoh komentar atas jendela yang sedang aktif.
+— menampilkan daftar model, balasan chat, dan contoh komentar atas jendela yang sedang aktif. Tambah `-voice`
+untuk hanya mengetes apakah model bisa mendengar audio.
 
 ## Kapan pet berkomentar
 
@@ -207,7 +268,9 @@ Cek koneksi tanpa membuka pet (butuh Go): `go run ./cmd/petai-check -provider op
 |---|---|
 | 🐾 Karakter | Pilih karakter, nama, warna, kepribadian, bahasa (Indonesia/English), ukuran |
 | 🚶 Gerak | Mode gerak, kecepatan, seberapa aktif, kembalikan posisi |
-| 🧠 AI | Aktif/nonaktif, provider, API key, model, base URL, tes koneksi, batas komentar per jam |
+| 🧠 AI | Aktif/nonaktif, provider, API key, model, base URL, tes koneksi (+ status mode suara), batas komentar per jam |
+| 🎙️ Voice | Status kemampuan audio model + tes ulang, model untuk suara, tes mikrofon, jeda diam, suara/nada/kecepatan TTS, percakapan bersambung |
+| 🚀 Aplikasi | Daftar aplikasi yang boleh dibuka pet, preset, Start Menu, konfirmasi, folder dokumen |
 | 🔒 Privasi | Izin melihat aktivitas, screenshot & intervalnya, daftar blokir, retensi log, sembunyi dari screen share, hapus data |
 | 📒 Memori | Daftar memori + ringkasan pemakaian 7 hari |
 | 🎞️ Animasi | Pustaka gerakan, putar/ekspor/hapus/impor |
@@ -221,6 +284,9 @@ Cek koneksi tanpa membuka pet (butuh Go): `go run ./cmd/petai-check -provider op
 | Chat tidak dibalas | *Pengaturan → AI → Tes koneksi*. Pastikan AI aktif, key tersimpan, model dipilih, dan model mendukung JSON schema. Lihat `%APPDATA%\PetAI\logs\petai.log`. |
 | Pet tidak pernah berkomentar sendiri | Nyalakan *Izinkan pet melihat aktivitas*, pastikan slider "cerewet" > 0, dan tunggu ±2 menit di sebuah aplikasi. Aplikasi di daftar blokir sengaja diabaikan. |
 | Tidak bisa mengetik di chat | Klik ganda pet sekali lagi; ketik setelah kotak input menyala biru. |
+| Klik 2× tidak masuk mode suara | *Pengaturan → 🎙️ Voice*: statusnya harus ✅. Bila ❌, pilih model yang menerima audio di *Model untuk suara*, lalu *Tes ulang*. |
+| Pet tidak mendengarku | *Voice → 🎤 Tes mikrofon*. Cek mikrofon default di Windows (*Settings → System → Sound → Input*) dan izin mikrofon untuk aplikasi desktop. |
+| Pet tidak bisa membuka aplikasi | Pastikan aplikasinya ada di *Pengaturan → 🚀 Aplikasi* dan tombol ▶ berhasil membukanya. |
 | Ingin PetAI jalan otomatis | *Pengaturan → Umum → Jalankan saat Windows mulai*. |
 | Ingin menghapus key | *Pengaturan → AI → Hapus*, atau Windows *Credential Manager* → entri `PetAI:anthropic` / `PetAI:openai`. |
 | Keluar | Ikon tray → *Keluar* (Alt+F4 sengaja dinonaktifkan agar pet tidak tertutup tak sengaja). |
@@ -250,14 +316,17 @@ main.go, app.go            Wails app + method yang dipanggil frontend
 cmd/petai-check            Cek koneksi AI dari command line
 internal/overlay           Win32: overlay transparan, click-through dinamis, fokus, DPI
 internal/watcher           Jendela aktif, idle, DND/fullscreen, screenshot, sensor & blocklist
-internal/brain             Kapan pet bicara, prompt, structured output, animasi & memori
+internal/brain             Kapan pet bicara, prompt, structured output, animasi, memori, giliran suara
+internal/voice             Tes kemampuan audio model (sampel WAV tertanam)
+internal/audio             Rekam mikrofon (winmm), VAD, WAV
+internal/launcher, docx    Buka aplikasi dari daftar, dokumen .docx/.txt, clipboard
 internal/ai                Provider Anthropic & OpenAI(-compatible)
 internal/anim              DSL animasi, validasi, pustaka lokal + 19 animasi bawaan
 internal/store             SQLite: aktivitas, memori, chat
 internal/config, secrets   config.json & Windows Credential Manager
 internal/tray, sys         Ikon tray, autostart, hotkey
 internal/debugapi          API QA lokal (hanya aktif bila PETAI_DEBUG_ADDR diset)
-frontend/src               three.js: karakter, player DSL, behavior, aktivitas + properti, bubble, menu, pengaturan
+frontend/src               three.js: karakter, player DSL, behavior, aktivitas + properti, bubble, suara (TTS), menu, pengaturan
 qa/                        Kontrak uji + harness QA (mock AI, skrip PowerShell)
 ```
 

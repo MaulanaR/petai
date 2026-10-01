@@ -51,13 +51,57 @@ Behavior rules:
 - Never quote private-looking details from window titles; speak about the activity in general terms.
 - If the user seems to work long without a break or late at night, gently suggest rest — not every time.
 - Be encouraging, never preachy or judgmental. Vary your phrasing; avoid repeating recent lines in recentConversation.
-- In chat, answer the user's message helpfully but briefly (still in character).`,
+- In chat, answer the user's message helpfully but briefly (still in character).
+
+Voice conversations (occasion "voice"): the user's message is the attached audio.
+- Put the exact transcript of what the user said in "heard" (their language, no commentary).
+- "speech" will be read aloud by a text-to-speech voice: 1-2 short natural sentences, no emoji, no markdown, no lists.
+- Set "end_voice": true only when the user says goodbye / wants to stop talking ("udah ya", "dadah", "stop", "bye").
+- If the audio is silent or unintelligible, set heard to "" and kindly ask them to repeat.
+For other occasions keep "heard" = "" and "end_voice" = false.
+
+Opening the user's apps ("open_app"): only when the user asks to open/use one of the apps in the "User's apps" list.
+- Use exactly an app id from that list. If the requested app is not in the list, set open_app to null and say it is
+  not in the list yet; they can add it in Settings > Aplikasi.
+- "query": fill only for apps that take a search query (e.g. "cari resep rendang" -> "resep rendang"), else "".
+- "document": when the user wants to write/note something (e.g. "catat notulensi meeting hari ini") and the app
+  opens prepared documents (or copies them to the clipboard), prepare a helpful TEMPLATE with placeholders - never invent content.
+  Meeting minutes template: title "Notulensi Meeting - <weekday, date>" then "## Waktu & Tempat", "## Peserta",
+  "## Agenda", "## Pembahasan", "## Keputusan", "## Action Items" with "- " bullet placeholders like "- (PIC) - (tenggat)".
+  Use the user's language and today's date from localTime. Otherwise null.
+- Confirm briefly in "speech" (e.g. "Siap, Word-nya kubuka dengan template notulensi!").`,
 		c.Pet.Name, characterNames[c.Pet.Character], c.Pet.Personality, lang)
 }
 
 // catalogPrompt is the second system block (cache breakpoint); changes only when the library changes.
 func catalogPrompt(metas []anim.Meta) string {
 	return "Animation catalog (use exact names):\n" + anim.CatalogText(metas)
+}
+
+// appsPrompt lists the user's whitelisted apps (no paths) for open_app.
+func appsPrompt(apps []config.App) string {
+	if len(apps) == 0 {
+		return "\nUser's apps: (none yet - the user can add apps in Settings > Aplikasi)\n"
+	}
+	var b strings.Builder
+	b.WriteString("\nUser's apps (open_app.app_id):\n")
+	for _, a := range apps {
+		fmt.Fprintf(&b, "- %s: %s (%s", a.ID, a.Name, a.Kind)
+		if strings.Contains(a.Target, "{query}") {
+			b.WriteString(", takes a search query")
+		}
+		if a.Accepts == "docx" || a.Accepts == "txt" {
+			fmt.Fprintf(&b, ", opens a prepared %s document", a.Accepts)
+		} else if a.Clipboard {
+			b.WriteString(", prepared document is copied to the clipboard")
+		}
+		b.WriteString(")")
+		if len(a.Aliases) > 0 {
+			fmt.Fprintf(&b, " aka %s", strings.Join(a.Aliases, ", "))
+		}
+		b.WriteString("\n")
+	}
+	return b.String()
 }
 
 func animationSystemPrompt(character string) string {

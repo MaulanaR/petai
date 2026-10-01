@@ -110,7 +110,7 @@ export class ActivityRunner {
 
   face(eyes, mouth) { this.d.getChar().face.setExpression(eyes, mouth); }
 
-  say(key, secs = 3) { this.d.bubble.say(this.d.line(key), '', secs); }
+  say(key, secs = 3) { if (!this.d.bubble.voiceOpen) this.d.bubble.say(this.d.line(key), '', secs); }
 
   fx(type, sx, sy) { this.d.fx.spawn(type, sx, sy); }
 

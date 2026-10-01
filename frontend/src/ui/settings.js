@@ -1,4 +1,4 @@
-import { api, call } from '../bridge.js';
+import { api, call, on } from '../bridge.js';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { CHARACTER_LIST } from '../characters/index.js';
 
@@ -8,6 +8,8 @@ const TABS = [
   ['pet', '🐾 Karakter'],
   ['move', '🚶 Gerak'],
   ['ai', '🧠 AI'],
+  ['voice', '🎙️ Voice'],
+  ['apps', '🚀 Aplikasi'],
   ['privacy', '🔒 Privasi'],
   ['memory', '📒 Memori'],
   ['anims', '🎞️ Animasi'],
@@ -15,10 +17,23 @@ const TABS = [
 ];
 
 const ANTHROPIC_MODELS = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-4-5', 'claude-fable-5-1'];
+const KIND_ICON = { program: '🖥️', website: '🌐', path: '📁' };
+const ACCEPTS_LABEL = { docx: 'dokumen Word', txt: 'teks', none: '' };
+const EMPTY_APP = { id: '', name: '', aliases: [], kind: 'program', target: '', args: '', accepts: 'none', clipboard: false };
 
 export class Settings {
-  constructor(container, { getConfig, onSaved, onPlay, onOpenChange, getBootstrap }) {
+  constructor(container, { getConfig, onSaved, onPlay, onOpenChange, getBootstrap, speaker }) {
     this.getConfig = getConfig;
+    this.speaker = speaker;
+    this.voice = { ready: false, supported: false, suggest: [] };
+    this.presets = null;
+    this.docsDefault = '';
+    this.editApp = null; // index being edited, -1 = new
+    on('mic:level', (v) => {
+      const bar = this.el.querySelector('.mic-meter i');
+      if (bar) bar.style.width = Math.round(Math.min(1, v.level * 1.4) * 100) + '%';
+      if (v.speaking && bar) bar.classList.add('talk');
+    });
     this.onSaved = onSaved;
     this.onPlay = onPlay;
     this.onOpenChange = onOpenChange;
@@ -46,6 +61,7 @@ export class Settings {
       this.keys = b.keys || this.keys;
       this.monitors = b.monitors || 1;
       this.version = b.version;
+      if (b.voice) this.voice = b.voice;
     }
     this.cfg = structuredClone(this.getConfig());
     this.visible = true;
@@ -73,6 +89,61 @@ export class Settings {
     if (!this.visible || this.saveTimer) return;
     this.cfg = structuredClone(cfg);
     if (!this.el.contains(document.activeElement)) this.render();
+  }
+
+  /** Voice capability changed (probe finished, model changed…). */
+  setVoiceInfo(info) {
+    this.voice = info || { ready: false };
+    if (!this.visible) return;
+    const card = this.el.querySelector('.status-card');
+    if (card) card.outerHTML = this.voiceCard();
+    const line = this.el.querySelector('.voice-line');
+    if (line) line.outerHTML = this.voiceLine();
+    const tog = this.el.querySelector('[data-k="ai.voice.enabled"]');
+    if (tog) { tog.disabled = !this.voice.supported; tog.closest('label').classList.toggle('disabled', !this.voice.supported); }
+    this.bindVoiceCard();
+  }
+
+  voiceCard() {
+    const v = this.voice || {};
+    const m = `<b>${esc(v.model || '(belum ada model)')}</b>`;
+    const retest = '<button class="btn ghost" data-act="voice-recheck">Tes ulang</button>';
+    if (!this.cfg.ai.enabled || !this.keys[this.cfg.ai.provider] || !v.model) {
+      return `<div class="status-card"><div>ℹ️ Atur AI dulu (tab 🧠 AI: aktifkan, API key, model). Setelah itu aku otomatis mengetes apakah modelnya bisa mendengar suara.</div></div>`;
+    }
+    if (v.checking) {
+      return `<div class="status-card wait"><div>⏳ Mengetes apakah ${m} bisa mendengar suara…</div></div>`;
+    }
+    if (!v.checkedAt) {
+      return `<div class="status-card wait"><div>⏳ ${m} belum dites — sebentar lagi dites otomatis.</div>${retest}</div>`;
+    }
+    if (v.supported) {
+      return `<div class="status-card ok"><div>✅ ${m} bisa mendengar suara. <b>Klik 2× pet</b> (atau Ctrl+Alt+V) untuk ngobrol pakai suara.</div>${retest}</div>`;
+    }
+    const chips = (v.suggest || []).length
+      ? `<div class="chips"><small>Model yang menerima audio di endpoint ini:</small>${v.suggest.map((s) => `<button class="chip" data-vmodel="${esc(s)}">${esc(s)}</button>`).join('')}</div>`
+      : '';
+    return `<div class="status-card bad"><div>❌ ${m} tidak menerima audio${v.error && !/menerima audio/.test(v.error) ? ` <small>(${esc(v.error)})</small>` : ''}.
+      Klik 2× pet tetap membuka <b>chat teks</b>. Pilih model yang mendukung audio di bawah untuk mengaktifkan mode suara.</div>${chips}${retest}</div>`;
+  }
+
+  voiceLine() {
+    const v = this.voice || {};
+    let s = '🎙️ Mode suara: ';
+    if (v.checking) s += 'mengetes model…';
+    else if (!v.checkedAt) s += 'belum dites';
+    else if (v.supported) s += `✅ ${esc(v.model)} bisa mendengar`;
+    else s += `❌ ${esc(v.model)} tidak menerima audio (klik 2× = chat teks)`;
+    return `<p class="note voice-line">${s} · <a href="#" class="go-voice">atur</a></p>`;
+  }
+
+  bindVoiceCard() {
+    this.el.querySelectorAll('[data-act="voice-recheck"]').forEach((b) => (b.onclick = () => this.action('voice-recheck', b)));
+    this.el.querySelectorAll('[data-vmodel]').forEach((b) => (b.onclick = () => {
+      this.change((c) => { c.ai.voice.model = b.dataset.vmodel; }, true);
+      this.flush();
+    }));
+    this.el.querySelectorAll('.go-voice').forEach((a) => (a.onclick = (e) => { e.preventDefault(); this.flush(); this.tab = 'voice'; this.render(); }));
   }
 
   // ---------- persistence ----------
@@ -201,10 +272,91 @@ export class Settings {
             </label>
           </details>
           <div class="row"><button class="btn" data-act="test">Tes koneksi</button><span class="test-out"></span></div>
+          ${this.voiceLine()}
           <label>Seberapa cerewet: maks <b>${c.ai.maxCallsPerHour}</b> komentar otomatis / jam <small>(0 = hanya saat diajak ngobrol)</small>
             <input type="range" min="0" max="60" step="1" data-k="ai.maxCallsPerHour" data-num value="${c.ai.maxCallsPerHour}">
           </label>
           <p class="note">Biaya API ditanggung akunmu sendiri. Model kecil (mis. claude-haiku-4-5) lebih hemat; Opus paling pintar.</p>`;
+      }
+      case 'voice': {
+        const v = c.ai.voice;
+        const p = c.ai.provider;
+        const voices = this.speaker ? this.speaker.listVoices() : [];
+        return `
+          ${this.voiceCard()}
+          <label>Model untuk suara <small>(kosong = sama dengan model chat: ${esc((p === 'openai' ? c.ai.openai : c.ai.anthropic).model || '-')})</small>
+            <input list="voice-model-list" data-k="ai.voice.model" value="${esc(v.model)}" placeholder="sama dengan model chat">
+            <datalist id="voice-model-list">${[...new Set([...(this.voice.suggest || []), ...(this.models[p] || [])])].map((m) => `<option value="${esc(m)}">`).join('')}</datalist>
+          </label>
+          <label class="switch ${this.voice.supported ? '' : 'disabled'}"><input type="checkbox" data-k="ai.voice.enabled" ${v.enabled ? 'checked' : ''} ${this.voice.supported ? '' : 'disabled'}><span></span>
+            Klik 2× pet = ngobrol pakai suara</label>
+          <h3>Mikrofon</h3>
+          <div class="row"><button class="btn ghost" data-act="mic-test">🎤 Tes mikrofon</button><div class="mic-meter"><i></i></div><span class="mic-out"></span></div>
+          <label>Jeda diam sebelum dikirim: <b>${v.silenceMs}</b> ms
+            <input type="range" min="500" max="3000" step="100" data-k="ai.voice.silenceMs" data-num value="${v.silenceMs}"></label>
+          <label class="switch"><input type="checkbox" data-k="ai.voice.continuous" ${v.continuous ? 'checked' : ''}><span></span> Percakapan bersambung (setelah menjawab, aku dengerin lagi)</label>
+          <h3>Suara pet</h3>
+          <label>Suara
+            <select data-k="ai.voice.ttsVoice">
+              <option value="">Otomatis (Andika untuk Bahasa Indonesia)</option>
+              ${voices.map((x) => `<option value="${esc(x.name)}" ${v.ttsVoice === x.name ? 'selected' : ''}>${esc(x.name)} — ${esc(x.lang)}</option>`).join('')}
+            </select>
+          </label>
+          <div class="row">
+            <label>Nada <input type="range" min="0.5" max="2" step="0.05" data-k="ai.voice.ttsPitch" data-num value="${v.ttsPitch}"></label>
+            <label>Kecepatan <input type="range" min="0.5" max="2" step="0.05" data-k="ai.voice.ttsRate" data-num value="${v.ttsRate}"></label>
+          </div>
+          <button class="btn ghost" data-act="tts-try">🔊 Coba suara</button>
+          <label class="switch"><input type="checkbox" data-k="ai.voice.speakAuto" ${v.speakAuto ? 'checked' : ''}><span></span> Bacakan juga komentar otomatis</label>
+          <p class="note">Mikrofon hanya aktif selama mode suara (titik merah di bubble). Rekaman tidak disimpan — hanya dikirim ke provider AI-mu. Selesai: ✖, Esc, klik pet, atau bilang "udah ya".</p>`;
+      }
+      case 'apps': {
+        const apps = c.launcher.apps || [];
+        const ed = this.editApp === null ? null : (this.editApp >= 0 ? apps[this.editApp] : null) || EMPTY_APP;
+        return `
+          <p class="note">Pet hanya bisa membuka aplikasi di daftar ini — mis. <i>"buka Word, catat notulensi meeting hari ini"</i> atau <i>"cari resep rendang di Google"</i>.</p>
+          <div class="app-list">${apps.length ? apps.map((a, i) => `
+            <div class="app-row">
+              <span class="app-ico">${KIND_ICON[a.kind] || '🖥️'}</span>
+              <div class="app-main"><b>${esc(a.name)}</b>${a.accepts !== 'none' ? ` <span class="badge builtin">${ACCEPTS_LABEL[a.accepts]}</span>` : ''}${a.clipboard ? ' <span class="badge ai">clipboard</span>' : ''}
+                <small>${esc(a.target)}${a.aliases && a.aliases.length ? ' · alias: ' + esc(a.aliases.join(', ')) : ''}</small></div>
+              <button class="icon" data-app-test="${i}" title="Coba buka">▶</button>
+              <button class="icon" data-app-edit="${i}" title="Ubah">✎</button>
+              <button class="icon" data-app-del="${i}" title="Hapus">🗑</button>
+            </div>`).join('') : '<p class="note">Belum ada aplikasi. Tambah dari pilihan cepat di bawah.</p>'}
+          </div>
+          <h3>Tambah cepat</h3>
+          <div class="chips preset-chips"><small>Memuat…</small></div>
+          <div class="row"><button class="btn ghost" data-act="app-startmenu">📋 Pilih dari Start Menu</button><button class="btn ghost" data-act="app-new">➕ Tambah manual</button></div>
+          <div class="lnk-list"></div>
+          ${ed ? `
+          <div class="app-form">
+            <h3>${this.editApp >= 0 ? 'Ubah aplikasi' : 'Aplikasi baru'}</h3>
+            <label>Nama <input class="af-name" value="${esc(ed.name)}" maxlength="40" placeholder="Microsoft Word"></label>
+            <label>Jenis
+              <select class="af-kind">
+                <option value="program" ${ed.kind === 'program' ? 'selected' : ''}>Program (.exe / shortcut)</option>
+                <option value="website" ${ed.kind === 'website' ? 'selected' : ''}>Website (boleh pakai {query})</option>
+                <option value="path" ${ed.kind === 'path' ? 'selected' : ''}>File / folder</option>
+              </select>
+            </label>
+            <label>Target
+              <div class="row"><input class="af-target" value="${esc(ed.target)}" placeholder="C:\\…\\app.exe  atau  https://www.google.com/search?q={query}"><button class="btn ghost" data-act="app-browse">Browse…</button></div>
+            </label>
+            <label>Argumen tambahan <small>(opsional)</small> <input class="af-args" value="${esc(ed.args)}"></label>
+            <label>Nama panggilan lain <small>(pisahkan koma)</small> <input class="af-aliases" value="${esc((ed.aliases || []).join(', '))}" placeholder="word, ms word"></label>
+            <label>Dokumen yang bisa disiapkan pet
+              <select class="af-accepts">
+                <option value="none" ${ed.accepts === 'none' ? 'selected' : ''}>Tidak ada (cuma buka)</option>
+                <option value="docx" ${ed.accepts === 'docx' ? 'selected' : ''}>Dokumen Word (.docx)</option>
+                <option value="txt" ${ed.accepts === 'txt' ? 'selected' : ''}>Teks (.txt)</option>
+              </select>
+            </label>
+            <label class="switch"><input type="checkbox" class="af-clip" ${ed.clipboard ? 'checked' : ''}><span></span> Salin template ke clipboard (untuk web, mis. Google Docs)</label>
+            <div class="row"><button class="btn" data-act="app-save">Simpan</button><button class="btn ghost" data-act="app-try">▶ Coba</button><button class="btn ghost" data-act="app-cancel">Batal</button></div>
+          </div>` : ''}
+          <label class="switch"><input type="checkbox" data-k="launcher.confirm" ${c.launcher.confirm ? 'checked' : ''}><span></span> Tanya dulu sebelum membuka aplikasi</label>
+          <label>Folder dokumen buatan pet <input data-k="launcher.docsFolder" value="${esc(c.launcher.docsFolder)}" placeholder="${esc(this.docsDefault || 'Documents\\PetAI')}"></label>`;
       }
       case 'privacy':
         return `
@@ -282,6 +434,10 @@ export class Settings {
         if (input.dataset.num !== undefined) v = Number(v);
         if (input.dataset.lines !== undefined) v = String(v).split('\n').map((s) => s.trim()).filter(Boolean);
         const rerender = ['ai.provider', 'privacy.watchActivity', 'ai.maxCallsPerHour'].includes(input.dataset.k);
+        if (input.dataset.k === 'ai.voice.silenceMs') {
+          const b = input.closest('label').querySelector('b');
+          if (b) b.textContent = v;
+        }
         this.change((c) => {
           let o = c;
           for (let i = 0; i < path.length - 1; i++) o = o[path[i]];
@@ -300,6 +456,85 @@ export class Settings {
     this.el.querySelectorAll('.credit-link').forEach((a) => (a.onclick = (e) => { e.preventDefault(); BrowserOpenURL(a.dataset.url); }));
     if (this.tab === 'memory') this.loadMemories();
     if (this.tab === 'anims') this.loadAnims();
+    if (this.tab === 'apps') this.bindApps();
+    this.bindVoiceCard();
+  }
+
+  // ---------- apps tab ----------
+
+  async bindApps() {
+    const root = this.el;
+    root.querySelectorAll('[data-app-test]').forEach((b) => (b.onclick = async () => {
+      const app = this.cfg.launcher.apps[Number(b.dataset.appTest)];
+      const [msg] = await call(api.TestLaunch, app);
+      this.toast(msg ? 'Gagal: ' + msg : `Membuka ${app.name}…`, !!msg);
+    }));
+    root.querySelectorAll('[data-app-edit]').forEach((b) => (b.onclick = () => { this.editApp = Number(b.dataset.appEdit); this.render(); }));
+    root.querySelectorAll('[data-app-del]').forEach((b) => (b.onclick = () => {
+      const i = Number(b.dataset.appDel);
+      this.editApp = null;
+      this.change((c) => { c.launcher.apps.splice(i, 1); }, true);
+    }));
+    if (!this.docsDefault) {
+      const [d] = await call(api.DefaultDocsFolder);
+      this.docsDefault = d || '';
+      const inp = root.querySelector('[data-k="launcher.docsFolder"]');
+      if (inp && d) inp.placeholder = d;
+    }
+    if (!this.presets) {
+      const [p] = await call(api.GetAppPresets);
+      this.presets = p || [];
+    }
+    const box = root.querySelector('.preset-chips');
+    if (!box) return;
+    const have = new Set((this.cfg.launcher.apps || []).map((a) => a.id));
+    box.innerHTML = this.presets.map((p, i) => `<button class="chip" data-preset="${i}" ${have.has(p.id) ? 'disabled' : ''}>${KIND_ICON[p.kind] || ''} ${esc(p.name)}${have.has(p.id) ? ' ✓' : ''}</button>`).join('')
+      || '<small>Tidak ada preset.</small>';
+    box.querySelectorAll('[data-preset]').forEach((b) => (b.onclick = () => {
+      const p = this.presets[Number(b.dataset.preset)];
+      this.change((c) => { c.launcher.apps = [...(c.launcher.apps || []), structuredClone(p)]; }, true);
+      this.flush();
+      this.toast(`${p.name} ditambahkan`);
+    }));
+  }
+
+  readAppForm() {
+    const q = (s) => this.el.querySelector(s);
+    return {
+      id: this.editApp >= 0 ? this.cfg.launcher.apps[this.editApp].id : '',
+      name: q('.af-name').value.trim(),
+      kind: q('.af-kind').value,
+      target: q('.af-target').value.trim(),
+      args: q('.af-args').value.trim(),
+      aliases: q('.af-aliases').value.split(',').map((s) => s.trim()).filter(Boolean),
+      accepts: q('.af-accepts').value,
+      clipboard: q('.af-clip').checked,
+    };
+  }
+
+  async showStartMenu() {
+    const box = this.el.querySelector('.lnk-list');
+    if (!box) return;
+    box.innerHTML = '<p class="note">Memuat…</p>';
+    const [list] = await call(api.ListStartMenuApps);
+    const items = list || [];
+    box.innerHTML = `<input class="lnk-filter" placeholder="Cari aplikasi…"><div class="lnk-items"></div>`;
+    const draw = (f) => {
+      const want = f.toLowerCase();
+      box.querySelector('.lnk-items').innerHTML = items.filter((x) => x.name.toLowerCase().includes(want)).slice(0, 60)
+        .map((x) => `<button class="lnk" data-lnk="${esc(x.path)}" data-name="${esc(x.name)}">${esc(x.name)}</button>`).join('') || '<small>Tidak ketemu.</small>';
+      box.querySelectorAll('[data-lnk]').forEach((b) => (b.onclick = () => {
+        const name = b.dataset.name;
+        const accepts = /\bword\b/i.test(name) ? 'docx' : /notepad/i.test(name) ? 'txt' : 'none';
+        this.change((c) => { c.launcher.apps = [...(c.launcher.apps || []), { ...EMPTY_APP, name, target: b.dataset.lnk, accepts }]; }, true);
+        this.flush();
+        this.toast(`${name} ditambahkan`);
+      }));
+    };
+    draw('');
+    const fi = box.querySelector('.lnk-filter');
+    fi.oninput = () => draw(fi.value);
+    fi.focus();
   }
 
   confirmOnce(btn) {
@@ -348,6 +583,7 @@ export class Settings {
         this.models[p] = res.models;
         out.textContent = `✅ Terhubung — ${res.models.length} model`;
         out.className = 'test-out ok';
+        if (!this.voice.checking && !this.voice.checkedAt) call(api.RecheckVoice).then(([info]) => info && this.setVoiceInfo(info));
         const dl = this.el.querySelector('#model-list');
         if (dl) dl.innerHTML = res.models.map((m) => `<option value="${esc(m)}">`).join('');
         if (p === 'openai' && !this.cfg.ai.openai.model && res.models.length) {
@@ -382,6 +618,72 @@ export class Settings {
       }
       case 'open-data':
         return call(api.OpenDataFolder);
+      case 'voice-recheck': {
+        await this.flush();
+        this.voice = { ...this.voice, checking: true };
+        this.setVoiceInfo(this.voice);
+        const [info, err] = await call(api.RecheckVoice);
+        if (err) return this.toast('Gagal: ' + err, true);
+        return this.setVoiceInfo(info);
+      }
+      case 'mic-test': {
+        const out = this.el.querySelector('.mic-out');
+        const bar = this.el.querySelector('.mic-meter i');
+        if (bar) bar.classList.remove('talk');
+        out.textContent = 'Coba bicara…';
+        btn.disabled = true;
+        const [r, err] = await call(api.TestMic, 4);
+        btn.disabled = false;
+        if (!out.isConnected) return;
+        if (bar) bar.style.width = '0%';
+        if (err || r.error) { out.textContent = '❌ ' + (err || r.error); return; }
+        out.textContent = r.speech ? '✅ Suaramu terdengar jelas' : r.peak > 0.02 ? '⚠️ Terdengar pelan — dekatkan mikrofon' : '⚠️ Tidak ada suara masuk — cek mikrofon default Windows';
+        return;
+      }
+      case 'tts-try': {
+        if (!this.speaker || !this.speaker.available()) return this.toast('Text-to-speech tidak tersedia', true);
+        const v = this.cfg.ai.voice;
+        const name = this.cfg.pet.name || 'Mochi';
+        const text = this.cfg.pet.language === 'en' ? `Hi! I'm ${name}. This is my voice.` : `Halo! Aku ${name}. Begini suaraku, lucu kan?`;
+        return this.speaker.speak(text, { lang: this.cfg.pet.language, voice: v.ttsVoice, pitch: v.ttsPitch, rate: v.ttsRate });
+      }
+      case 'app-new':
+        this.editApp = -1;
+        return this.render();
+      case 'app-cancel':
+        this.editApp = null;
+        return this.render();
+      case 'app-startmenu':
+        return this.showStartMenu();
+      case 'app-browse': {
+        const [path] = await call(api.PickProgram);
+        if (!path) return;
+        const t = this.el.querySelector('.af-target');
+        t.value = path;
+        const n = this.el.querySelector('.af-name');
+        if (n && !n.value) n.value = path.split(/[\\/]/).pop().replace(/\.(exe|lnk)$/i, '');
+        return;
+      }
+      case 'app-try': {
+        const app = this.readAppForm();
+        if (!app.target) return this.toast('Isi target dulu', true);
+        const [msg] = await call(api.TestLaunch, { ...app, name: app.name || 'tes' });
+        return this.toast(msg ? 'Gagal: ' + msg : 'Membuka…', !!msg);
+      }
+      case 'app-save': {
+        const app = this.readAppForm();
+        if (!app.name || !app.target) return this.toast('Nama & target wajib diisi', true);
+        if (app.kind === 'website' && !/^https?:\/\//i.test(app.target)) return this.toast('Website harus diawali http:// atau https://', true);
+        const i = this.editApp;
+        this.editApp = null;
+        this.change((cfg) => {
+          const list = [...(cfg.launcher.apps || [])];
+          if (i >= 0) list[i] = app; else list.push(app);
+          cfg.launcher.apps = list;
+        }, true);
+        await this.flush();
+        return this.toast(`${app.name} disimpan`);
+      }
     }
   }
 

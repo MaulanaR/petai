@@ -33,6 +33,10 @@ type Deps struct {
 	Rand     func() float64
 	// HasKey reports whether the selected provider has an API key (nil = assume yes).
 	HasKey func(cfg config.Config) bool
+	// VoiceProvider returns the provider/model used for voice turns (nil = Provider).
+	VoiceProvider func(cfg config.Config) (ai.Provider, error)
+	// OpenApp executes an AI request to open a whitelisted app (nil = ignored).
+	OpenApp func(req OpenApp)
 }
 
 // Activity is the subset of the foreground window the engine cares about.
@@ -63,6 +67,7 @@ type Engine struct {
 	busy        bool
 	hidden      bool
 	paused      bool
+	talking     bool // a voice conversation is running: no automatic comments
 	inflight    int
 	mood        string
 	clicks      int
@@ -146,6 +151,13 @@ func (e *Engine) SetHidden(h bool) {
 	e.mu.Unlock()
 }
 
+// SetTalking suppresses automatic occasions while the user is in a voice conversation.
+func (e *Engine) SetTalking(t bool) {
+	e.mu.Lock()
+	e.talking = t
+	e.mu.Unlock()
+}
+
 // SetPaused stops activity observation-driven occasions (tray "Pause pengamatan").
 func (e *Engine) SetPaused(p bool) {
 	e.mu.Lock()
@@ -194,7 +206,7 @@ func (e *Engine) Decide() string {
 	c := e.d.Config.Get()
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	if !c.AI.Enabled || e.inflight > 0 || e.hidden {
+	if !c.AI.Enabled || e.inflight > 0 || e.hidden || e.talking {
 		return ""
 	}
 	if e.d.HasKey != nil && !e.d.HasKey(c) {
@@ -311,16 +323,29 @@ func (e *Engine) Chat(ctx context.Context, text string) (*PetAction, error) {
 	return e.RunOccasion(ctx, "chat", true, text)
 }
 
+// Voice answers a spoken message: the recording goes straight to the voice model, which also
+// returns what it heard. Not rate limited.
+func (e *Engine) Voice(ctx context.Context, wav []byte) (*PetAction, error) {
+	if len(wav) == 0 {
+		return nil, errors.New("rekaman kosong")
+	}
+	return e.runTurn(ctx, "voice", true, "", wav)
+}
+
 // RunOccasion performs one AI turn. force=true bypasses rate limits and is not counted
 // as an automatic call (debug triggers, chat).
 func (e *Engine) RunOccasion(ctx context.Context, occ string, force bool, userText string) (*PetAction, error) {
+	return e.runTurn(ctx, occ, force, userText, nil)
+}
+
+func (e *Engine) runTurn(ctx context.Context, occ string, force bool, userText string, audio []byte) (*PetAction, error) {
 	now := e.d.Now()
 	cfg := e.d.Config.Get()
 	if !cfg.AI.Enabled {
 		return nil, errors.New("AI dinonaktifkan di Pengaturan → AI")
 	}
 	e.mu.Lock()
-	if e.inflight > 0 && occ != "chat" && !force {
+	if e.inflight > 0 && occ != "chat" && occ != "voice" && !force {
 		e.mu.Unlock()
 		return nil, errBusy
 	}
@@ -334,10 +359,16 @@ func (e *Engine) RunOccasion(ctx context.Context, occ string, force bool, userTe
 
 	prov, err := e.d.Provider(cfg)
 	if err != nil {
-		if occ == "chat" {
+		if occ == "chat" || occ == "voice" {
 			e.d.Emit("ai:error", err.Error())
 		}
 		return nil, err
+	}
+	turnProv := prov
+	if occ == "voice" && e.d.VoiceProvider != nil {
+		if turnProv, err = e.d.VoiceProvider(cfg); err != nil {
+			return nil, err
+		}
 	}
 	// Only count calls that actually reach a provider.
 	e.mu.Lock()
@@ -362,17 +393,18 @@ func (e *Engine) RunOccasion(ctx context.Context, occ string, force bool, userTe
 		e.mu.Unlock()
 	}
 	userMsg := "[task:pet_action]\n" + e.contextJSON(cfg, occ, userText, image != nil)
-	res, err := prov.Generate(ctx, ai.Request{
-		System:     []string{personaPrompt(cfg), catalogPrompt(e.d.Lib.Catalog(cfg.Pet.Character))},
+	res, err := turnProv.Generate(ctx, ai.Request{
+		System:     []string{personaPrompt(cfg), catalogPrompt(e.d.Lib.Catalog(cfg.Pet.Character)) + appsPrompt(cfg.Launcher.Apps)},
 		User:       userMsg,
 		Image:      image,
+		Audio:      audio,
 		SchemaName: "PetAction",
 		Schema:     PetActionSchema,
 		Effort:     "low",
 		MaxTokens:  4096,
 	})
 	if err != nil {
-		if occ == "chat" {
+		if occ == "chat" || occ == "voice" {
 			e.d.Emit("ai:error", err.Error())
 		}
 		return nil, err
@@ -384,8 +416,16 @@ func (e *Engine) RunOccasion(ctx context.Context, occ string, force bool, userTe
 	act.Sanitize()
 	e.d.Logf("ai %s ok model=%s in=%d out=%d cache=%d", occ, res.Model, res.InputTokens, res.OutputTokens, res.CacheRead)
 
+	if occ != "voice" {
+		act.Heard, act.EndVoice = "", false
+	} else {
+		act.Heard = watcher.Redact(act.Heard)
+	}
 	if occ == "chat" && e.d.Store != nil {
 		_ = e.d.Store.AppendChat("user", userText, now)
+	}
+	if occ == "voice" && act.Heard != "" && e.d.Store != nil {
+		_ = e.d.Store.AppendChat("user", act.Heard, now)
 	}
 	if act.Speech != "" && e.d.Store != nil {
 		_ = e.d.Store.AppendChat("pet", act.Speech, now)
@@ -415,6 +455,9 @@ func (e *Engine) RunOccasion(ctx context.Context, occ string, force bool, userTe
 	}
 	e.d.Emit("pet:action", map[string]any{"occasion": occ, "action": emitted})
 
+	if act.OpenApp != nil && e.d.OpenApp != nil {
+		e.d.OpenApp(*act.OpenApp)
+	}
 	if gen != nil {
 		if spec, err := e.generateAnimation(ctx, prov, cfg, *gen); err != nil {
 			e.d.Logf("animation %s rejected: %v", gen.Name, err)
@@ -496,6 +539,9 @@ func (e *Engine) contextJSON(cfg config.Config, occ, userText string, hasImage b
 	}
 	if occ == "chat" {
 		ctx["userMessage"] = userText
+	}
+	if occ == "voice" {
+		ctx["userMessage"] = "(spoken - listen to the attached audio and put the exact transcript in heard)"
 	}
 	if occ == "user_click" {
 		ctx["clicksJustNow"] = clicks

@@ -188,6 +188,55 @@ export namespace brain {
 	        this.content = source["content"];
 	    }
 	}
+	export class OpenDoc {
+	    title: string;
+	    content: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OpenDoc(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.title = source["title"];
+	        this.content = source["content"];
+	    }
+	}
+	export class OpenApp {
+	    app_id: string;
+	    query: string;
+	    document?: OpenDoc;
+	
+	    static createFrom(source: any = {}) {
+	        return new OpenApp(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.app_id = source["app_id"];
+	        this.query = source["query"];
+	        this.document = this.convertValues(source["document"], OpenDoc);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 	export class PetAction {
 	    speech: string;
 	    mood: string;
@@ -196,6 +245,9 @@ export namespace brain {
 	    memory_ops: MemoryOp[];
 	    suggestion: string;
 	    activity: string;
+	    heard: string;
+	    end_voice: boolean;
+	    open_app?: OpenApp;
 	
 	    static createFrom(source: any = {}) {
 	        return new PetAction(source);
@@ -210,6 +262,9 @@ export namespace brain {
 	        this.memory_ops = this.convertValues(source["memory_ops"], MemoryOp);
 	        this.suggestion = source["suggestion"];
 	        this.activity = source["activity"];
+	        this.heard = source["heard"];
+	        this.end_voice = source["end_voice"];
+	        this.open_app = this.convertValues(source["open_app"], OpenApp);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -235,6 +290,42 @@ export namespace brain {
 
 export namespace config {
 	
+	export class Voice {
+	    enabled: boolean;
+	    model: string;
+	    supported: boolean;
+	    key: string;
+	    checkedAt: string;
+	    error: string;
+	    suggest: string[];
+	    silenceMs: number;
+	    continuous: boolean;
+	    ttsVoice: string;
+	    ttsPitch: number;
+	    ttsRate: number;
+	    speakAuto: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Voice(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.enabled = source["enabled"];
+	        this.model = source["model"];
+	        this.supported = source["supported"];
+	        this.key = source["key"];
+	        this.checkedAt = source["checkedAt"];
+	        this.error = source["error"];
+	        this.suggest = source["suggest"];
+	        this.silenceMs = source["silenceMs"];
+	        this.continuous = source["continuous"];
+	        this.ttsVoice = source["ttsVoice"];
+	        this.ttsPitch = source["ttsPitch"];
+	        this.ttsRate = source["ttsRate"];
+	        this.speakAuto = source["speakAuto"];
+	    }
+	}
 	export class ProviderCfg {
 	    model: string;
 	    baseURL: string;
@@ -255,6 +346,7 @@ export namespace config {
 	    anthropic: ProviderCfg;
 	    openai: ProviderCfg;
 	    maxCallsPerHour: number;
+	    voice: Voice;
 	
 	    static createFrom(source: any = {}) {
 	        return new AI(source);
@@ -267,6 +359,67 @@ export namespace config {
 	        this.anthropic = this.convertValues(source["anthropic"], ProviderCfg);
 	        this.openai = this.convertValues(source["openai"], ProviderCfg);
 	        this.maxCallsPerHour = source["maxCallsPerHour"];
+	        this.voice = this.convertValues(source["voice"], Voice);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class App {
+	    id: string;
+	    name: string;
+	    aliases: string[];
+	    kind: string;
+	    target: string;
+	    args: string;
+	    accepts: string;
+	    clipboard: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new App(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.aliases = source["aliases"];
+	        this.kind = source["kind"];
+	        this.target = source["target"];
+	        this.args = source["args"];
+	        this.accepts = source["accepts"];
+	        this.clipboard = source["clipboard"];
+	    }
+	}
+	export class Launcher {
+	    apps: App[];
+	    confirm: boolean;
+	    docsFolder: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Launcher(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.apps = this.convertValues(source["apps"], App);
+	        this.confirm = source["confirm"];
+	        this.docsFolder = source["docsFolder"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -378,6 +531,7 @@ export namespace config {
 	    ai: AI;
 	    privacy: Privacy;
 	    general: General;
+	    launcher: Launcher;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -391,6 +545,7 @@ export namespace config {
 	        this.ai = this.convertValues(source["ai"], AI);
 	        this.privacy = this.convertValues(source["privacy"], Privacy);
 	        this.general = this.convertValues(source["general"], General);
+	        this.launcher = this.convertValues(source["launcher"], Launcher);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -415,11 +570,58 @@ export namespace config {
 	
 	
 	
+	
+	
+
+}
+
+export namespace launcher {
+	
+	export class Shortcut {
+	    name: string;
+	    path: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Shortcut(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.path = source["path"];
+	    }
+	}
 
 }
 
 export namespace main {
 	
+	export class VoiceInfo {
+	    ready: boolean;
+	    supported: boolean;
+	    checking: boolean;
+	    model: string;
+	    error: string;
+	    suggest: string[];
+	    checkedAt: string;
+	    active: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new VoiceInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ready = source["ready"];
+	        this.supported = source["supported"];
+	        this.checking = source["checking"];
+	        this.model = source["model"];
+	        this.error = source["error"];
+	        this.suggest = source["suggest"];
+	        this.checkedAt = source["checkedAt"];
+	        this.active = source["active"];
+	    }
+	}
 	export class Bootstrap {
 	    config: config.Config;
 	    monitor: overlay.Monitor;
@@ -429,6 +631,7 @@ export namespace main {
 	    version: string;
 	    initError: string;
 	    monitors: number;
+	    voice: VoiceInfo;
 	
 	    static createFrom(source: any = {}) {
 	        return new Bootstrap(source);
@@ -444,6 +647,7 @@ export namespace main {
 	        this.version = source["version"];
 	        this.initError = source["initError"];
 	        this.monitors = source["monitors"];
+	        this.voice = this.convertValues(source["voice"], VoiceInfo);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -463,6 +667,24 @@ export namespace main {
 		    }
 		    return a;
 		}
+	}
+	export class MicTest {
+	    ok: boolean;
+	    speech: boolean;
+	    peak: number;
+	    error: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new MicTest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ok = source["ok"];
+	        this.speech = source["speech"];
+	        this.peak = source["peak"];
+	        this.error = source["error"];
+	    }
 	}
 	export class PetState {
 	    x: number;

@@ -64,6 +64,9 @@ func supportsDefaultFallback(model string) bool {
 }
 
 func (p *anthropicProvider) Generate(ctx context.Context, req Request) (Response, error) {
+	if len(req.Audio) > 0 {
+		return Response{}, ErrAudioUnsupported // Claude does not accept audio input
+	}
 	system := make([]anthropic.BetaTextBlockParam, 0, len(req.System))
 	for i, s := range req.System {
 		b := anthropic.BetaTextBlockParam{Text: s}

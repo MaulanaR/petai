@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"petai/internal/ai"
@@ -22,6 +23,7 @@ import (
 	"petai/internal/paths"
 	"petai/internal/secrets"
 	"petai/internal/store"
+	"petai/internal/voice"
 	"petai/internal/watcher"
 )
 
@@ -34,6 +36,7 @@ func main() {
 	lang := flag.String("lang", "id", "id | en")
 	fgApp := flag.String("fg-app", "", "simulate the foreground app (exe name) instead of reading it")
 	fgTitle := flag.String("fg-title", "", "simulated foreground window title (with -fg-app)")
+	voiceProbe := flag.Bool("voice", false, "only test whether the model can hear audio (voice mode capability) and exit")
 	save := flag.Bool("save", false, "after a successful check, write provider/model/base (and watchActivity=true) into the app's config.json")
 	flag.Parse()
 
@@ -77,6 +80,22 @@ func main() {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
+
+	if *voiceProbe {
+		p, err := newProv(cfg)
+		if err != nil {
+			fail("provider: %v", err)
+		}
+		r := voice.Probe(ctx, p)
+		fmt.Printf("voice      : supported=%v heard=%q\n", r.Supported, r.Heard)
+		if r.Error != "" {
+			fmt.Printf("  error    : %s\n", r.Error)
+		}
+		if len(r.Suggestions) > 0 {
+			fmt.Printf("  try      : %s\n", strings.Join(r.Suggestions, ", "))
+		}
+		return
+	}
 
 	// 1. connection
 	prov, err := newProv(cfg)

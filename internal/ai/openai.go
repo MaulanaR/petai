@@ -42,14 +42,21 @@ func (p *openAIProvider) Generate(ctx context.Context, req Request) (Response, e
 	if len(req.System) > 0 {
 		msgs = append(msgs, openai.SystemMessage(strings.Join(req.System, "\n\n")))
 	}
-	if len(req.Image) > 0 {
-		parts := []openai.ChatCompletionContentPartUnionParam{
-			openai.ImageContentPart(openai.ChatCompletionContentPartImageImageURLParam{
+	if len(req.Image) > 0 || len(req.Audio) > 0 {
+		parts := []openai.ChatCompletionContentPartUnionParam{}
+		if len(req.Image) > 0 {
+			parts = append(parts, openai.ImageContentPart(openai.ChatCompletionContentPartImageImageURLParam{
 				URL:    "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(req.Image),
 				Detail: "low",
-			}),
-			openai.TextContentPart(req.User),
+			}))
 		}
+		if len(req.Audio) > 0 {
+			parts = append(parts, openai.InputAudioContentPart(openai.ChatCompletionContentPartInputAudioInputAudioParam{
+				Data:   base64.StdEncoding.EncodeToString(req.Audio),
+				Format: "wav",
+			}))
+		}
+		parts = append(parts, openai.TextContentPart(req.User))
 		msgs = append(msgs, openai.UserMessage(parts))
 	} else {
 		msgs = append(msgs, openai.UserMessage(req.User))
@@ -104,6 +111,9 @@ func classifyOpenAI(err error) error {
 			return ErrAuth
 		case 429:
 			return ErrRateLimit
+		}
+		if apierr.StatusCode == 400 && strings.Contains(strings.ToLower(apierr.Error()), "audio") {
+			return fmt.Errorf("%w: %s", ErrAudioUnsupported, apierr.Error())
 		}
 		return fmt.Errorf("openai %d: %s", apierr.StatusCode, shortErr(apierr.Error()))
 	}

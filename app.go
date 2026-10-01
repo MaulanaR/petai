@@ -20,6 +20,7 @@ import (
 	"petai/internal/brain"
 	"petai/internal/config"
 	"petai/internal/debugapi"
+	"petai/internal/launcher"
 	"petai/internal/logx"
 	"petai/internal/overlay"
 	"petai/internal/paths"
@@ -32,7 +33,7 @@ import (
 )
 
 // appVersion is overridden at release build time: -ldflags "-X main.appVersion=x.y.z".
-var appVersion = "0.2.0"
+var appVersion = "0.3.0"
 
 // PetState is reported by the frontend (CSS px relative to the overlay).
 type PetState struct {
@@ -62,6 +63,7 @@ type Bootstrap struct {
 	Version    string            `json:"version"`
 	InitError  string            `json:"initError"`
 	Monitors   int               `json:"monitors"`
+	Voice      VoiceInfo         `json:"voice"`
 }
 
 type TestResult struct {
@@ -96,6 +98,9 @@ type App struct {
 	lastMonitor int
 	launchFG    uintptr
 	feLogAt     time.Time
+	stopHotkey2 func()
+	vs          voiceState
+	launch      *launcher.Launcher
 }
 
 func NewApp() *App { return &App{fast: os.Getenv("PETAI_FAST") == "1"} }
@@ -139,16 +144,19 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	a.eng = brain.New(brain.Deps{
-		Config:   a.cfg,
-		Store:    a.st,
-		Lib:      a.lib,
-		Provider: a.provider,
-		Emit:     a.emit,
-		Capture:  a.capture,
-		Logf:     a.logf,
-		Fast:     a.fast,
-		HasKey:   func(c config.Config) bool { return secrets.Get(c.AI.Provider) != "" },
+		Config:        a.cfg,
+		Store:         a.st,
+		Lib:           a.lib,
+		Provider:      a.provider,
+		Emit:          a.emit,
+		Capture:       a.capture,
+		Logf:          a.logf,
+		Fast:          a.fast,
+		HasKey:        func(c config.Config) bool { return secrets.Get(c.AI.Provider) != "" },
+		VoiceProvider: a.voiceProvider,
+		OpenApp:       a.openApp,
 	})
+	a.launch = launcher.New()
 	a.wat = watcher.New(watcher.Callbacks{
 		OnForeground: a.onForeground,
 		OnIdle:       a.onIdle,
@@ -159,12 +167,14 @@ func (a *App) startup(ctx context.Context) {
 	tray.Start(trayIcon, tray.Actions{
 		ToggleVisible: func() bool { v := !a.isHidden(); a.setHidden(v); return !v },
 		OpenChat:      func() { a.showFromTray(); a.emit("ui:open", "chat") },
+		OpenVoice:     func() { a.showFromTray(); a.emit("ui:open", "voice") },
 		OpenSettings:  func() { a.showFromTray(); a.emit("ui:open", "settings") },
 		TogglePause:   func() bool { p := !a.eng.Paused(); a.eng.SetPaused(p); a.emit("watch:paused", p); return p },
 		HideHour:      func() { a.HideFor(60) },
 		Quit:          a.Quit,
 	})
 	a.stopHotkey = sys.Hotkey(win.MOD_CONTROL|win.MOD_ALT, 'P', func() { a.showFromTray(); a.emit("ui:open", "chat") })
+	a.stopHotkey2 = sys.Hotkey(win.MOD_CONTROL|win.MOD_ALT, 'V', func() { a.showFromTray(); a.emit("ui:open", "voice") })
 
 	if addr := os.Getenv("PETAI_DEBUG_ADDR"); addr != "" {
 		if stop, err := debugapi.Start(addr, debugBackend{a}, a.logf); err != nil {
@@ -200,6 +210,7 @@ func (a *App) domReady(ctx context.Context) {
 	go ov.Run(rctx)
 	go a.wat.Run(rctx)
 	go a.eng.Run(rctx)
+	go a.checkVoice(false) // test whether the selected model can hear (once per provider/model)
 	a.emit("monitor", m)
 	// WebView2 creation activates the host window; give focus back to whoever had it.
 	go func() {
@@ -226,6 +237,10 @@ func (a *App) shutdown(ctx context.Context) {
 	if a.stopHotkey != nil {
 		a.stopHotkey()
 	}
+	if a.stopHotkey2 != nil {
+		a.stopHotkey2()
+	}
+	a.StopVoice()
 	if a.stopDebug != nil {
 		a.stopDebug()
 	}
@@ -289,6 +304,12 @@ func (a *App) onConfigChanged(cfg config.Config) {
 		}
 	}
 	a.emit("config:changed", cfg)
+	// A new provider / endpoint / model (or voice model) needs a fresh audio capability test.
+	if a.ctx != nil && a.voiceKey(cfg) != cfg.AI.Voice.Key {
+		a.scheduleVoiceCheck() // debounced: the model field saves while the user types
+	} else {
+		a.emitVoiceInfo()
+	}
 }
 
 func (a *App) onForeground(f watcher.Foreground) {
@@ -374,6 +395,7 @@ func (a *App) GetBootstrap() Bootstrap {
 		Version:   appVersion,
 		InitError: a.initErr,
 		Monitors:  len(win.Monitors()),
+		Voice:     a.voiceInfo(cfg),
 	}
 	if a.lib != nil {
 		b.Animations = a.lib.Specs(cfg.Pet.Character)
@@ -462,6 +484,7 @@ func (a *App) ReportPetState(s PetState) {
 }
 
 func (a *App) SaveConfig(c config.Config) (config.Config, error) {
+	a.keepVoiceResult(&c) // capability results are owned by the backend
 	return a.cfg.Set(c)
 }
 
@@ -471,6 +494,9 @@ func (a *App) SetAPIKey(provider, key string) (string, error) {
 		return "", err
 	}
 	a.logf("api key updated for %s", provider)
+	if provider == a.cfg.Get().AI.Provider {
+		go a.checkVoice(true)
+	}
 	return secrets.Masked(provider), nil
 }
 
@@ -610,6 +636,14 @@ func (d debugBackend) State() any {
 	if cfg.AI.Provider == "openai" {
 		pc = cfg.AI.OpenAI
 	}
+	vi := a.voiceInfo(cfg)
+	a.vs.mu.Lock()
+	phase := a.vs.phase
+	a.vs.mu.Unlock()
+	if phase == "" {
+		phase = "idle"
+	}
+	out["voice"] = map[string]any{"supported": vi.Supported, "ready": vi.Ready, "checking": vi.Checking, "model": vi.Model, "error": vi.Error, "suggest": vi.Suggest, "phase": phase}
 	out["ai"] = map[string]any{
 		"provider": cfg.AI.Provider, "model": pc.Model,
 		"hasKey": secrets.Get(cfg.AI.Provider) != "", "callsLastHour": a.eng.CallsLastHour(),
@@ -654,6 +688,29 @@ func (d debugBackend) Play(name string) error {
 
 func (d debugBackend) Memories() (any, error) { return d.a.ListMemories() }
 
+func (d debugBackend) Voice(wav []byte) (any, error) {
+	ctx, cancel := context.WithTimeout(d.a.ctx, 2*time.Minute)
+	defer cancel()
+	act, err := d.a.eng.Voice(ctx, wav)
+	if act == nil {
+		return nil, err
+	}
+	return act, err
+}
+
+func (d debugBackend) VoiceProbe() any {
+	res := d.a.checkVoice(true)
+	return map[string]any{"result": res, "info": d.a.voiceInfo(d.a.cfg.Get())}
+}
+
+func (d debugBackend) Launch(body []byte) (any, error) {
+	var req launcher.Request
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	return d.a.doLaunch(req)
+}
+
 func (d debugBackend) Activity(name string) error {
 	for _, a := range brain.Activities {
 		if a == name {
@@ -666,9 +723,15 @@ func (d debugBackend) Activity(name string) error {
 
 func (d debugBackend) OpenUI(what string) error {
 	switch what {
-	case "settings", "chat", "menu":
+	case "settings", "chat", "menu", "voice":
 		d.a.emit("ui:open", what)
 		return nil
+	case "settings:voice", "settings:apps", "settings:ai":
+		d.a.emit("ui:open", what)
+		return nil
+	case "voice-stop":
+		d.a.StopVoice()
+		return nil
 	}
-	return errors.New("open must be settings|chat|menu")
+	return errors.New("open must be settings|chat|menu|voice|voice-stop")
 }

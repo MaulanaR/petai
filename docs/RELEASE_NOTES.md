@@ -1,43 +1,51 @@
-## PetAI v0.2.0 — pet yang lebih hidup 🫧⚽🏀⛳🚽
+## PetAI v0.3.0 — ngobrol pakai suara 🎙️ & membuka aplikasi 🚀
 
-![Joget hasil rancangan AI](https://github.com/MaulanaR/petai/blob/main/docs/act-dance.gif?raw=true)
+![Mode suara](https://github.com/MaulanaR/petai/blob/main/docs/voice-mode.png?raw=true)
 
 ### Baru
 
-**Bisa disuruh lewat chat** — "joget dong", "salto ke belakang", "push up", "muter-muter"…
-Kalau gerakannya belum ada, AI merancangnya sendiri (keyframe JSON, bukan kode), lalu pet langsung
-memperagakannya. Selama dirancang, bubble menampilkan *🎵 lagi latihan gerakan baru…*. Gerakan tersimpan
-dan berikutnya langsung dipakai ulang tanpa merancang lagi.
+**🎙️ Ngobrol pakai suara** — klik 2× pet (atau `Ctrl+Alt+V`), bicara, dan pet menjawab dengan suara
+(Microsoft Andika untuk Bahasa Indonesia) sambil mulutnya bergerak. Percakapan bersambung sampai kamu
+menekan ✖ / `Esc`, mengklik pet, bilang "udah ya", atau diam 30 detik. Klik pet saat ia bicara untuk memotong.
 
-**Aktivitas dengan properti 3D** — muncul sendiri sesekali (±3–8 menit), lewat klik kanan → *Main*, atau
-lewat chat ("main bola yuk!"):
+- **Hanya aktif bila model AI-mu bisa mendengar audio.** Setiap kali provider / base URL / model / API key
+  berubah, PetAI mengetes model dengan rekaman bawaan "satu, dua, tiga" (bukan suaramu). Bila model tidak
+  menerima audio, klik 2× tetap membuka **chat teks** seperti biasa, dan tab 🎙️ Voice menampilkan alasannya
+  beserta model yang mendukung audio (bila endpoint menyebutkannya).
+- **Model untuk suara** bisa dibedakan dari model chat (mis. chat pakai model pintar, suara pakai model yang
+  menerima `input_audio`).
+- Mikrofon hanya aktif selama mode suara (titik merah), rekaman tidak disimpan ke disk.
 
-| | |
+**🚀 Pet bisa membuka aplikasi** — daftarkan aplikasi di *Pengaturan → 🚀 Aplikasi* (preset Notepad, Word,
+Google Docs, Google Search, YouTube, Kalkulator, pilih dari Start Menu, atau tambah manual), lalu suruh lewat
+chat atau suara:
+
+| Kamu bilang | Hasil |
 |---|---|
-| ⚽ **Sepak bola** — bola jatuh memantul, dikejar, ditendang, "GOOOL!" | 🏀 **Basket** — ring muncul, dribel, tembak (kadang meleset), "Swish~" |
-| ⛳ **Golf** — pegang stik, pukul ke bendera, putt, kadang *hole in one* | 🚽 **Toilet** — mules dulu (> <, keringat), toilet kayu muncul, masuk, *plung*, keluar lega ✨ |
+| "Tolong buka Word, catat notulensi meeting hari ini" | `.docx` template notulensi (Waktu & Tempat, Peserta, Agenda, Pembahasan, Keputusan, Action Items) terbuka di Word |
+| "Buka Google Docs, catat notulensi" | `docs.new` + template di clipboard → tinggal Ctrl+V |
+| "Cari resep rendang di Google" | Tab pencarian Google |
 
-![Toilet](https://github.com/MaulanaR/petai/blob/main/docs/act-toilet.gif?raw=true)
+Pet hanya bisa membuka aplikasi yang ada di daftarmu; path & argumen tidak pernah berasal dari AI.
+Opsional: *Tanya dulu sebelum membuka aplikasi* (✔/✖ di bubble).
 
 **Lainnya**
-- 6 animasi bawaan baru: tendang, dribel, tembak, ayun golf, mules, lega · ekspresi baru mata `> <` & mulut
-  bergelombang · efek ♪.
-- Lebih banyak variasi saat santai; komentar aktivitas selalu menanggapi apa yang sedang kamu buka.
-- Fokus chat lebih andal saat klik ganda; bubble lebih rapi; `config.json` tahan BOM & dicadangkan bila rusak.
-- AI yang dimatikan benar-benar tidak memanggil AI; pet tidak lagi keluar dari tepi atas layar; klik cepat
-  di dekat pet tidak tertelan.
-- Kredit pencipta di aplikasi (Pengaturan), installer, dan README.
+- Tab Pengaturan baru: 🎙️ Voice (status model, tes ulang, tes mikrofon, suara/nada/kecepatan TTS, jeda diam)
+  dan 🚀 Aplikasi. Status mode suara juga tampil di tab 🧠 AI.
+- Selama ngobrol pakai suara, komentar otomatis dan aktivitas acak ditahan dulu.
+- Menu klik kanan & tray: *Ngobrol (suara)* dan *Ajak ngobrol (ketik)*.
+- `petai-check -voice` untuk mengetes kemampuan audio model dari command line.
 
 ### Unduh
 
 | File | Untuk |
 |---|---|
-| `PetAI-v0.2.0-windows-amd64-setup.exe` | Installer (shortcut Start Menu, uninstaller, memasang WebView2 bila perlu) |
-| `PetAI-v0.2.0-windows-amd64-portable.exe` | Portable — langsung jalan tanpa instal |
+| `PetAI-v0.3.0-windows-amd64-setup.exe` | Installer (shortcut Start Menu, uninstaller, memasang WebView2 bila perlu) |
+| `PetAI-v0.3.0-windows-amd64-portable.exe` | Portable — langsung jalan tanpa instal |
 | `SHA256SUMS.txt` | Checksum |
 
 Windows 10/11 64-bit. Belum ditandatangani: jika SmartScreen muncul, pilih **More info → Run anyway**.
-Pengaturan, API key, memori, dan animasi dari v0.1.0 tetap terpakai.
+Pengaturan, API key, memori, dan animasi dari versi sebelumnya tetap terpakai.
 
 Panduan lengkap: [README](https://github.com/MaulanaR/petai#readme).
 

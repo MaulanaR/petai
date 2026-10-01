@@ -115,7 +115,7 @@ html, body {
 }
 .bubble-tip {
   display: none; margin-top: 6px; padding: 6px 8px; background: var(--paper-2);
-  border: 2px dashed var(--ink); border-radius: 10px; font-size: 13px; font-weight: 600;
+  border: 2px dashed var(--ink); border-radius: 10px; font-size: 13px; font-weight: 600; white-space: pre-line;
 }
 .bubble-dots { display: none; gap: 5px; padding: 4px 2px; }
 .bubble-dots span {
@@ -258,3 +258,49 @@ html, body {
 }
 .st-toast.show { opacity: 1; transform: translate(-50%, 0); }
 .st-toast.bad { background: var(--bad); }
+
+/* ---------- voice mode ---------- */
+.bubble-voice { display: none; align-items: center; gap: 8px; margin: -2px 0 6px; min-width: 200px; }
+.bubble.voice .bubble-voice { display: flex; }
+.bubble.voice .bubble-x { display: none; }
+.mic-dot { width: 10px; height: 10px; border-radius: 50%; background: #c9c3d6; border: 2px solid var(--ink); flex: none; }
+.bubble[data-phase="listening"] .mic-dot { background: #ff4d6d; animation: micpulse 1.1s infinite; }
+@keyframes micpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.6); } 50% { box-shadow: 0 0 0 6px rgba(255, 77, 109, 0); } }
+.mic-bars { display: flex; align-items: center; gap: 3px; height: 20px; }
+.mic-bars i { display: block; width: 4px; height: 20px; border-radius: 3px; background: var(--accent-2); border: 1.5px solid var(--ink); transform: scaleY(0.15); transform-origin: center; transition: transform 0.08s; }
+.bubble:not([data-phase="listening"]) .mic-bars i { transform: scaleY(0.15) !important; opacity: 0.5; }
+.voice-status { flex: 1; font-size: 13px; color: var(--muted); font-weight: 700; white-space: nowrap; }
+.voice-btn { border: 2px solid var(--ink); background: #fff; border-radius: 10px; width: 28px; height: 26px; cursor: pointer; font-size: 13px; line-height: 1; padding: 0; box-shadow: 2px 2px 0 var(--ink); }
+.voice-btn:active { transform: translate(2px, 2px); box-shadow: none; }
+.voice-stop { background: #ffd9dc; }
+.bubble-ask { display: none; margin-top: 8px; font-size: 13px; }
+.ask-row { display: flex; gap: 6px; margin-top: 6px; }
+.ask-btn { border: 2px solid var(--ink); background: var(--accent-2); border-radius: 10px; padding: 3px 12px; font: inherit; font-weight: 700; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); }
+.ask-btn:last-child { background: #fff; }
+
+/* ---------- settings: voice & apps ---------- */
+.status-card { border: 2.5px solid var(--ink); border-radius: 14px; padding: 10px 12px; margin-bottom: 10px; background: #fff; }
+.status-card.ok { background: #e3f8ec; }
+.status-card.bad { background: #ffeef0; }
+.status-card.wait { background: var(--paper-2); }
+.status-card { display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.4; }
+.status-card small { color: var(--muted); word-break: break-word; }
+.status-card .btn { align-self: flex-start; }
+.status-card .chips small { width: 100%; }
+.chip:disabled { opacity: 0.55; cursor: default; }
+.mic-meter { flex: 1; min-width: 80px; height: 12px; border: 2px solid var(--ink); border-radius: 999px; background: #fff; overflow: hidden; }
+.mic-meter i { display: block; height: 100%; width: 0; background: #c9c3d6; transition: width 0.08s; }
+.mic-meter i.talk { background: #4cc38a; }
+.mic-out { font-size: 13px; }
+.voice-line a, .credit-link { color: inherit; }
+.lnk-filter { width: 100%; box-sizing: border-box; border: 0; border-bottom: 2px solid var(--ink); padding: 6px 8px; font: inherit; position: sticky; top: 0; background: #fff; }
+.lnk-list:empty { display: none; }
+.app-ico { font-size: 18px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.app-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 2px solid var(--ink); border-radius: 12px; margin-bottom: 6px; background: #fff; }
+.app-row .app-main { flex: 1; min-width: 0; }
+.app-row .app-main small { display: block; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-form { border: 2px dashed var(--ink); border-radius: 14px; padding: 8px 12px; margin: 8px 0; }
+.lnk-list { max-height: 180px; overflow-y: auto; border: 2px solid var(--ink); border-radius: 10px; background: #fff; margin-top: 6px; }
+.lnk-list button { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid #eee; background: none; padding: 5px 8px; font: inherit; cursor: pointer; }
+.lnk-list button:hover { background: var(--paper-2); }

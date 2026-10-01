@@ -46,7 +46,14 @@ the keyring (testing only). Keys never appear in logs, `config.json`, `/debug/*`
   "ai": { "enabled": true, "provider": "anthropic|openai",
           "anthropic": { "model": "claude-opus-5-5", "baseURL": "" },
           "openai":    { "model": "", "baseURL": "" },
-          "maxCallsPerHour": 12 },
+          "maxCallsPerHour": 12,
+          "voice": { "enabled": true, "model": "", "supported": false, "key": "provider|baseURL|model",
+                     "checkedAt": "", "error": "", "suggest": [], "silenceMs": 1000, "continuous": true,
+                     "ttsVoice": "", "ttsPitch": 1.3, "ttsRate": 1.05, "speakAuto": false } },
+  "launcher": { "apps": [ { "id": "word", "name": "Microsoft Word", "aliases": ["word"],
+                            "kind": "program|website|path", "target": "C:\\...\\WINWORD.EXE | https://...{query}",
+                            "args": "", "accepts": "none|docx|txt", "clipboard": false } ],
+                "confirm": false, "docsFolder": "" },
   "privacy": { "watchActivity": false, "screenshots": false, "screenshotIntervalMin": 10,
                "blocklist": ["1password","bitwarden","keepass","inprivate","incognito","bank","bca","mandiri","bri","bni"],
                "retentionDays": 14, "excludeFromCapture": true },
@@ -54,6 +61,11 @@ the keyring (testing only). Keys never appear in logs, `config.json`, `/debug/*`
 }
 ```
 Defaults: `watchActivity=false`, `screenshots=false` (privacy opt-in). Unknown/missing keys → defaults.
+`ai.voice.supported/key/checkedAt/error/suggest` are owned by the backend (a settings save never
+changes them). Voice mode is **ready** only when `ai.enabled && voice.enabled && voice.supported &&
+voice.key == "<provider>|<effective baseURL>|<voice model or chat model>"`. Any change of provider,
+base URL, voice model or chat model (when `voice.model` is empty) or API key triggers a new capability
+probe (debounced ~1.5 s). `launcher.apps` is normalised: ids are slugs, unique; max 40 apps.
 
 Env overrides (testing): `PETAI_ANTHROPIC_BASE_URL`, `PETAI_OPENAI_BASE_URL` (override baseURL),
 `PETAI_FAST=1` (all trigger thresholds/cooldowns divided by 60: minutes → seconds),
@@ -80,8 +92,18 @@ Only when env `PETAI_DEBUG_ADDR` is set (e.g. `127.0.0.1:47611`). Binds that add
 - `GET  /debug/memories` → `[{"id","kind","content","source","confidence"}]`.
 - `POST /debug/activity` `{"name":"football|basketball|golf|toilet"}` → starts that prop scene now.
   While it runs `/debug/state.pet.state` is `"activity:<name>"`; during the toilet scene `pet.visible` is false.
-- `POST /debug/ui` `{"open":"settings|chat|menu"}` → opens that UI exactly like the tray / double-click /
-  right-click would (chat & settings take keyboard focus; Esc closes them and returns focus).
+- `POST /debug/ui` `{"open":"settings|chat|menu|voice|voice-stop|settings:voice|settings:apps|settings:ai"}` →
+  opens that UI exactly like the tray / double-click / right-click would (chat & settings take keyboard
+  focus; Esc closes them and returns focus). `voice` starts a real microphone session only when voice is
+  ready (otherwise the text chat opens); `voice-stop` ends it.
+- `POST /debug/voice` `{"wav_base64":"..."}` → one voice turn with that WAV instead of the microphone,
+  same path as voice mode → `{"ok":true,"action":{PetAction},"error":""}`.
+- `POST /debug/voice-probe` → re-runs the audio capability probe now →
+  `{"supported":bool,"heard":"...","error":"...","suggestions":[...],"model":"...","checkedAt":"..."}`.
+- `POST /debug/launch` `{"app_id":"notepad","query":"","document":{"title":"...","content":"..."}|null}` →
+  launches a configured app exactly like an AI `open_app` → `{"ok":true,"result":{"app","file","url","clipboard"},"error":""}`.
+- `/debug/state.voice` = `{supported, ready, checking, model, error, suggest, phase}`;
+  `phase` = `idle|listening|thinking|speaking`.
 - `/debug/state.pet.viewport` = `{w,h,scrollY,dpr}` (CSS px) for coordinate diagnostics.
 
 ## AI wire contract
@@ -113,8 +135,24 @@ non-blocklisted foreground app.
   "new_animation_request": { "name": "snake_case", "description": "string" } | null,
   "memory_ops": [ { "op": "add|update|forget", "id": 0, "kind": "habit|preference|fact|goal", "content": "string" } ],
   "suggestion": "string ('' = none)",
-  "activity": "''|football|basketball|golf|toilet" }
+  "activity": "''|football|basketball|golf|toilet",
+  "heard": "exact transcript of the user's audio (voice turns only, else '')",
+  "end_voice": false,
+  "open_app": { "app_id": "configured id", "query": "string",
+                "document": { "title": "string", "content": "markdown-ish text" } | null } | null }
 ```
+Voice turns (`occasion: "voice"`) attach the user's recording as an OpenAI `input_audio` content part
+(`format: "wav"`, base64) and use the voice model; `heard` is redacted and stored as the user's chat
+message. `heard`/`end_voice` are ignored for non-voice turns. `end_voice=true` ends the voice session
+after the reply is spoken. `open_app.app_id` must be one of `launcher.apps[].id` (others are rejected
+with a `launcher:error`); path/args never come from the AI. Documents for `accepts=docx|txt` apps are
+written to `launcher.docsFolder` (default `Documents\PetAI`) as `<safe title> <yyyy-mm-dd HHmm>.docx|.txt`;
+websites with `clipboard=true` get the plain-text document on the clipboard; `{query}` is URL-escaped.
+
+Capability probe: one request with an embedded 16 kHz WAV saying "satu, dua, tiga" and schema
+`{"heard": string}`; supported only if the reply contains at least two of satu/dua/tiga (1/2/3,
+one/two/three). Anthropic → always unsupported (no audio input). A gateway 400 listing
+"models that do: a/x, b/y" fills `suggest` with `x, y`.
 `activity` starts a scripted prop scene in the frontend (ball, hoop, golf flag, outhouse). Explicit
 user requests ("joget", "salto", "main bola"…) must be fulfilled: a matching catalog animation, else a
 `new_animation_request`, or the activity.

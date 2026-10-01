@@ -16,7 +16,9 @@ type Request struct {
 	// User is the final user message: "[task:<name>]\n<context JSON>".
 	User string
 	// Image is an optional JPEG attached to the user message.
-	Image      []byte
+	Image []byte
+	// Audio is an optional recording (WAV) attached to the user message (voice mode).
+	Audio      []byte
 	SchemaName string
 	Schema     json.RawMessage
 	// Effort is "low" or "medium" (ignored by models without effort support).
@@ -45,6 +47,8 @@ var (
 	ErrRateLimit = errors.New("rate limit provider (429)")
 	ErrRefusal   = errors.New("model menolak permintaan")
 	ErrEmpty     = errors.New("respons kosong")
+	// ErrAudioUnsupported: the selected model/provider cannot take audio input.
+	ErrAudioUnsupported = errors.New("model ini tidak menerima audio")
 )
 
 // Config selects and configures a provider.

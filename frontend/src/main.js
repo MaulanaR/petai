@@ -11,6 +11,7 @@ import { Settings } from './ui/settings.js';
 import { setLang, t, line } from './i18n.js';
 import { PropStage } from './stage.js';
 import { ActivityRunner, ACTIVITIES } from './activities.js';
+import { Speaker } from './voice.js';
 
 const BASE_UNIT = 110; // px per world unit at scale 1
 const MOOD_FACE = {
@@ -45,13 +46,24 @@ const S = {
   facingY: 0,
   hidden: false,
   petHidden: false,
+  voice: { ready: false },
   lastActivity: performance.now() - 4 * 60000, // first random activity ~1.5 min after start
 };
 
 const view = new PetView(root);
 const fx = new Effects(root);
 const stage = new PropStage(root);
-const bubble = new Bubble(root, { onSend: sendChat, onClose: () => updateFocus(), t });
+const bubble = new Bubble(root, {
+  onSend: sendChat,
+  onClose: () => updateFocus(),
+  onVoiceStop: () => stopVoice(),
+  onVoiceKeyboard: () => { stopVoice(); openChat(); },
+  t,
+});
+const speaker = new Speaker({
+  // lip-sync: only the mouth changes while speaking
+  onMouth: (open) => { if (S.char) S.char.face.setExpression(null, open ? 'open' : 'smile'); },
+});
 const menu = new Menu(root, t);
 const settings = new Settings(root, {
   getConfig: () => S.cfg,
@@ -61,6 +73,7 @@ const settings = new Settings(root, {
     pet.react(name);
   },
   onOpenChange: () => updateFocus(),
+  speaker,
 });
 
 const pet = new PetBehavior({
@@ -85,7 +98,7 @@ const ACTIVITY_WEIGHTS = [['football', 3], ['basketball', 3], ['golf', 3], ['toi
 
 /** Random prop activity, at most every 3–8 minutes depending on "seberapa aktif". */
 function maybeRandomActivity() {
-  if (runner.running || bubble.chatOpen || settings.open || S.down || pet.away) return false;
+  if (runner.running || bubble.chatOpen || bubble.voiceOpen || settings.open || S.down || pet.away) return false;
   const act = S.cfg?.movement?.activity ?? 0.5;
   if (performance.now() - S.lastActivity < (8 - 5 * act) * 60000) return false;
   let r = Math.random() * ACTIVITY_WEIGHTS.reduce((a, [, w]) => a + w, 0);
@@ -183,6 +196,8 @@ const slugName = (n) => String(n).toLowerCase().trim().replace(/[-\s]+/g, '_').r
 
 function handleAction({ occasion, action }) {
   if (!action) return;
+  // A late automatic comment must not talk over a voice conversation.
+  if (bubble.voiceOpen && occasion !== 'voice' && occasion !== 'chat') return;
   // An automatic comment is not a reply to whatever the user typed last.
   if (occasion !== 'chat') bubble.userEl.style.display = 'none';
   const anim = action.animation || (action.speech ? MOOD_ANIM[action.mood] : '');
@@ -199,9 +214,48 @@ function handleAction({ occasion, action }) {
     pet.react(anim);
   }
   setTimeout(() => setMood(action.mood), 60);
+  if (occasion === 'voice') {
+    bubble.showHeard(action.heard);
+    if (action.speech) speaker.speak(action.speech, ttsOptions()).then(() => api.VoiceSpoken());
+    else api.VoiceSpoken();
+  } else if (action.speech && S.cfg?.ai?.voice?.speakAuto && occasion !== 'chat') {
+    speaker.speak(action.speech, ttsOptions());
+  }
   if (action.activity && ACTIVITIES.includes(action.activity)) {
     setTimeout(() => runner.start(action.activity), 700);
   }
+}
+
+// ---------------- voice ----------------
+
+function ttsOptions() {
+  const v = S.cfg?.ai?.voice || {};
+  return { lang: S.cfg?.pet?.language || 'id', voice: v.ttsVoice || '', pitch: v.ttsPitch || 1.3, rate: v.ttsRate || 1.05 };
+}
+
+async function startVoice() {
+  menu.close();
+  if (!S.voice.ready) {
+    openChat();
+    bubble.note(t('voiceNotReady'), 7);
+    return;
+  }
+  if (bubble.chatOpen) bubble.close();
+  if (runner.running) runner.abort(); // full attention while talking
+  bubble.openVoice();
+  S.char.face.setExpression('neutral', 'smile');
+  const [reason] = await call(api.StartVoice);
+  if (reason) {
+    bubble.closeVoice(0);
+    openChat();
+    bubble.note('⚠️ ' + reason, 6);
+  }
+}
+
+function stopVoice() {
+  speaker.cancel();
+  api.StopVoice();
+  bubble.closeVoice(2);
 }
 
 async function sendChat(text) {
@@ -301,7 +355,15 @@ window.addEventListener('mouseup', (e) => {
   S.clicks.push(now);
   if (S.clicks.length >= 2 && now - S.clicks[S.clicks.length - 2] < 320) {
     S.clicks = [];
-    openChat();
+    clearTimeout(S.clickTimer);
+    if (S.voice.ready) startVoice(); // double-click = voice when the model can hear
+    else openChat(); // otherwise text chat, as before
+    return;
+  }
+  // In voice mode a click interrupts the pet while it talks, or ends the conversation.
+  if (bubble.voiceOpen) {
+    if (speaker.speaking) { speaker.cancel(); api.VoiceSpoken(); } else stopVoice();
+    S.clicks = [];
     return;
   }
   S.clickTimer = setTimeout(() => {
@@ -319,6 +381,7 @@ window.addEventListener('contextmenu', (e) => {
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    if (bubble.voiceOpen) stopVoice();
     if (settings.open) settings.hide();
     menu.close();
   }
@@ -329,6 +392,7 @@ function openMenu(x, y) {
   const setMode = (mode) => saveConfig((cfg) => { cfg.movement.mode = mode; cfg.movement.anchorX = -1; cfg.movement.anchorY = -1; });
   const setChar = (id) => saveConfig((cfg) => { cfg.pet.character = id; });
   menu.open(x, y, [
+    ...(S.voice.ready ? [{ label: t('menuVoice'), onClick: startVoice }] : []),
     { label: t('menuChat'), onClick: openChat },
     { label: pet.state === 'sleep' ? t('menuWake') : t('menuSleep'), onClick: () => (pet.state === 'sleep' ? pet.setAway(false) : pet.enter('sleep')) },
     { sep: true },
@@ -388,6 +452,38 @@ on('pet:play', (name) => {
   pet.react(name);
 });
 on('pet:activity', (name) => runner.start(name));
+on('voice:capability', (info) => {
+  S.voice = info || { ready: false };
+  settings.setVoiceInfo(S.voice);
+  if (!S.voice.ready && bubble.voiceOpen) stopVoice();
+});
+on('voice:state', (phase) => {
+  if (phase === 'idle') { bubble.closeVoice(4); return; }
+  if (!bubble.voiceOpen) bubble.openVoice();
+  bubble.setVoicePhase(phase);
+  if (phase === 'listening' && S.char) S.char.face.setExpression('neutral', 'smile');
+});
+on('voice:level', (v) => bubble.setLevel(v.level));
+on('voice:end', (reason) => {
+  if (reason === 'timeout') bubble.note(t('voiceTimeout'), 4);
+  bubble.closeVoice(4);
+});
+on('voice:error', (msg) => {
+  speaker.cancel();
+  bubble.closeVoice(0);
+  bubble.say(t('voiceError') + msg, '', 8);
+});
+on('launcher:opened', (res) => {
+  let note = '📂 ' + t('opening') + ' ' + res.app + '…';
+  if (res.clipboard) note += '\n📋 ' + t('clipboardReady');
+  bubble.note(note, 7);
+  pet.react('wave');
+});
+on('launcher:error', (e) => bubble.say(t('launchFail') + (e.app ? e.app + ': ' : '') + e.error, '', 8));
+on('launcher:confirm', (c) => bubble.ask(t('confirmOpen') + ' ' + c.app + '?', [
+  { label: '✔ ' + t('yes'), onClick: () => api.ConfirmLaunch(c.token, true) },
+  { label: '✖', onClick: () => api.ConfirmLaunch(c.token, false) },
+]));
 on('ai:thinking', (onOff) => { if (bubble.chatOpen) bubble.setThinking(onOff); });
 on('ai:error', (msg) => {
   if (!bubble.chatOpen) return;
@@ -404,7 +500,8 @@ on('user:presence', ({ away }) => {
 });
 on('config:changed', (c) => applyConfig(c));
 on('ui:open', (what) => {
-  if (what === 'settings') return settings.show();
+  if (what.startsWith('settings')) return settings.show(what.split(':')[1]);
+  if (what === 'voice') return startVoice();
   if (what === 'menu') {
     const r = petRect();
     return r && openMenu(r.x + r.w, r.y);
@@ -489,6 +586,8 @@ async function boot() {
     return;
   }
   S.specs = b.animations || [];
+  S.voice = b.voice || { ready: false };
+  setTimeout(() => api.LogFrontend('tts voices: ' + speaker.listVoices().map((v) => v.name + '/' + v.lang).join(', ')), 2500);
   if (b.monitor && b.monitor.sizeCss && b.monitor.sizeCss.w) S.monitor = b.monitor;
   const [m] = await call(api.GetMonitor);
   if (m && m.sizeCss && m.sizeCss.w) S.monitor = m;

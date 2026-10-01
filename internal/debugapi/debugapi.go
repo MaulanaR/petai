@@ -3,6 +3,7 @@ package debugapi
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io"
@@ -22,6 +23,9 @@ type Backend interface {
 	Memories() (any, error)
 	OpenUI(what string) error
 	Activity(name string) error
+	Voice(wav []byte) (any, error)
+	VoiceProbe() any
+	Launch(body []byte) (any, error)
 }
 
 // Start serves on addr (must be a loopback address). Returns a shutdown func.
@@ -100,6 +104,44 @@ func Start(addr string, b Backend, logf func(string, ...any)) (func(), error) {
 		_ = json.NewDecoder(r.Body).Decode(&in)
 		err := b.Activity(in.Name)
 		reply(w, map[string]any{"ok": err == nil}, err)
+	})
+	mux.HandleFunc("/debug/voice", func(w http.ResponseWriter, r *http.Request) {
+		if !post(w, r) {
+			return
+		}
+		var in struct {
+			WavBase64 string `json:"wav_base64"`
+		}
+		_ = json.NewDecoder(io.LimitReader(r.Body, 20<<20)).Decode(&in)
+		wav, err := base64.StdEncoding.DecodeString(in.WavBase64)
+		if err != nil || len(wav) == 0 {
+			reply(w, nil, errors.New("wav_base64 required"))
+			return
+		}
+		act, err := b.Voice(wav)
+		out := map[string]any{"ok": err == nil, "action": act, "error": ""}
+		if err != nil {
+			out["error"] = err.Error()
+		}
+		reply(w, out, nil)
+	})
+	mux.HandleFunc("/debug/voice-probe", func(w http.ResponseWriter, r *http.Request) {
+		if !post(w, r) {
+			return
+		}
+		reply(w, b.VoiceProbe(), nil)
+	})
+	mux.HandleFunc("/debug/launch", func(w http.ResponseWriter, r *http.Request) {
+		if !post(w, r) {
+			return
+		}
+		body, _ := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+		res, err := b.Launch(body)
+		out := map[string]any{"ok": err == nil, "result": res, "error": ""}
+		if err != nil {
+			out["error"] = err.Error()
+		}
+		reply(w, out, nil)
 	})
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {

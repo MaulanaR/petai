@@ -14,6 +14,14 @@ export function Chat(arg1) {
   return window['go']['main']['App']['Chat'](arg1);
 }
 
+export function ConfirmLaunch(arg1, arg2) {
+  return window['go']['main']['App']['ConfirmLaunch'](arg1, arg2);
+}
+
+export function DefaultDocsFolder() {
+  return window['go']['main']['App']['DefaultDocsFolder']();
+}
+
 export function DeleteAnimation(arg1, arg2) {
   return window['go']['main']['App']['DeleteAnimation'](arg1, arg2);
 }
@@ -30,12 +38,20 @@ export function GetAnimations(arg1) {
   return window['go']['main']['App']['GetAnimations'](arg1);
 }
 
+export function GetAppPresets() {
+  return window['go']['main']['App']['GetAppPresets']();
+}
+
 export function GetBootstrap() {
   return window['go']['main']['App']['GetBootstrap']();
 }
 
 export function GetMonitor() {
   return window['go']['main']['App']['GetMonitor']();
+}
+
+export function GetVoiceInfo() {
+  return window['go']['main']['App']['GetVoiceInfo']();
 }
 
 export function HideFor(arg1) {
@@ -54,6 +70,10 @@ export function ListMemories() {
   return window['go']['main']['App']['ListMemories']();
 }
 
+export function ListStartMenuApps() {
+  return window['go']['main']['App']['ListStartMenuApps']();
+}
+
 export function LogFrontend(arg1) {
   return window['go']['main']['App']['LogFrontend'](arg1);
 }
@@ -66,8 +86,16 @@ export function PetClicked(arg1) {
   return window['go']['main']['App']['PetClicked'](arg1);
 }
 
+export function PickProgram() {
+  return window['go']['main']['App']['PickProgram']();
+}
+
 export function Quit() {
   return window['go']['main']['App']['Quit']();
+}
+
+export function RecheckVoice() {
+  return window['go']['main']['App']['RecheckVoice']();
 }
 
 export function ReportPetState(arg1) {
@@ -94,12 +122,32 @@ export function SetHitRegions(arg1) {
   return window['go']['main']['App']['SetHitRegions'](arg1);
 }
 
+export function StartVoice() {
+  return window['go']['main']['App']['StartVoice']();
+}
+
+export function StopVoice() {
+  return window['go']['main']['App']['StopVoice']();
+}
+
+export function TestLaunch(arg1) {
+  return window['go']['main']['App']['TestLaunch'](arg1);
+}
+
+export function TestMic(arg1) {
+  return window['go']['main']['App']['TestMic'](arg1);
+}
+
 export function TestProvider(arg1, arg2) {
   return window['go']['main']['App']['TestProvider'](arg1, arg2);
 }
 
 export function UpdateMemory(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateMemory'](arg1, arg2, arg3);
+}
+
+export function VoiceSpoken() {
+  return window['go']['main']['App']['VoiceSpoken']();
 }
 
 export function WipeAllData() {
