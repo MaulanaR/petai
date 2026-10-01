@@ -316,6 +316,9 @@ func (e *Engine) Chat(ctx context.Context, text string) (*PetAction, error) {
 func (e *Engine) RunOccasion(ctx context.Context, occ string, force bool, userText string) (*PetAction, error) {
 	now := e.d.Now()
 	cfg := e.d.Config.Get()
+	if !cfg.AI.Enabled {
+		return nil, errors.New("AI dinonaktifkan di Pengaturan → AI")
+	}
 	e.mu.Lock()
 	if e.inflight > 0 && occ != "chat" && !force {
 		e.mu.Unlock()

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"math"
 	"os"
+	"runtime"
 	"sync"
 	"time"
 
@@ -274,7 +275,7 @@ func (o *Overlay) SetFocusable(on bool) {
 			o.mu.Unlock()
 		}
 		win.SetExStyle(o.hwnd, ex&^win.WS_EX_NOACTIVATE)
-		win.SetForegroundWindow(o.hwnd)
+		o.takeForeground(fg)
 		return
 	}
 	win.SetExStyle(o.hwnd, ex|win.WS_EX_NOACTIVATE)
@@ -285,6 +286,25 @@ func (o *Overlay) SetFocusable(on bool) {
 	if prev != 0 && win.ForegroundWindow() == o.hwnd {
 		win.SetForegroundWindow(prev)
 	}
+}
+
+// takeForeground activates the overlay for keyboard input. A plain SetForegroundWindow is
+// often refused by the foreground lock (our clicks never activate the NOACTIVATE window), so
+// the input queue of the current foreground thread is attached for the duration of the call.
+func (o *Overlay) takeForeground(fg uintptr) {
+	if win.SetForegroundWindow(o.hwnd) && win.ForegroundWindow() == o.hwnd {
+		return
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	cur := win.CurrentThreadID()
+	if fgTid := win.WindowThreadID(fg); fg != 0 && fgTid != 0 && fgTid != cur {
+		if win.AttachThreadInput(cur, fgTid, true) {
+			defer win.AttachThreadInput(cur, fgTid, false)
+		}
+	}
+	win.BringWindowToTop(o.hwnd)
+	win.SetForegroundWindow(o.hwnd)
 }
 
 // Interactive reports whether the overlay currently receives mouse input.
@@ -330,10 +350,9 @@ func (o *Overlay) step() {
 			}
 		}
 	}
-	// Keep input while a drag that started on the pet is in progress.
-	if !inside && o.interactive && win.KeyDown(win.VK_LBUTTON) {
-		inside = true
-	}
+	// Drags need no special case here: the frontend forces interactivity on mousedown and the
+	// WebView holds mouse capture. Keeping the overlay interactive while a button is down
+	// swallowed fast clicks just outside the pet.
 	if o.hidden {
 		inside = false
 	}

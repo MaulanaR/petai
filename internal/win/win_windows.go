@@ -51,7 +51,28 @@ var (
 	procDwmGetWindowAttribute        = dwmapi.NewProc("DwmGetWindowAttribute")
 	procGetTickCount                 = kernel32.NewProc("GetTickCount")
 	procGetCurrentThreadId           = kernel32.NewProc("GetCurrentThreadId")
+	procAttachThreadInput            = user32.NewProc("AttachThreadInput")
+	procBringWindowToTop             = user32.NewProc("BringWindowToTop")
 )
+
+// WindowThreadID returns the id of the thread that created window h.
+func WindowThreadID(h uintptr) uint32 {
+	r, _, _ := procGetWindowThreadProcessId.Call(h, 0)
+	return uint32(r)
+}
+
+func AttachThreadInput(from, to uint32, attach bool) bool {
+	a := uintptr(0)
+	if attach {
+		a = 1
+	}
+	r, _, _ := procAttachThreadInput.Call(uintptr(from), uintptr(to), a)
+	return r != 0
+}
+
+func BringWindowToTop(h uintptr) {
+	procBringWindowToTop.Call(h)
+}
 
 const (
 	GWL_EXSTYLE = -20

@@ -239,6 +239,20 @@ func TestMemoryOpsAndConsolidate(t *testing.T) {
 	}
 }
 
+func TestAIDisabledBlocksEveryPath(t *testing.T) {
+	e, fp, _, _, _, _ := setup(t, `{"ai":{"enabled":false}}`)
+	ctx := context.Background()
+	if _, err := e.RunOccasion(ctx, "greet", true, ""); err == nil {
+		t.Fatal("forced trigger must respect ai.enabled=false")
+	}
+	if _, err := e.Chat(ctx, "halo"); err == nil {
+		t.Fatal("chat must respect ai.enabled=false")
+	}
+	if len(fp.reqs) != 0 {
+		t.Fatalf("%d AI requests while disabled", len(fp.reqs))
+	}
+}
+
 func TestSchemasAreValidJSON(t *testing.T) {
 	for _, s := range []json.RawMessage{PetActionSchema, AnimationSpecSchema, MemoryOpsSchema} {
 		var m map[string]any

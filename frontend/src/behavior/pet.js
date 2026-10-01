@@ -101,7 +101,8 @@ export class PetBehavior {
     const b = this.bounds;
     const half = this.unitPx * 0.6;
     this.pos.x = Math.max(b.left + half, Math.min(b.right - half, this.pos.x));
-    this.pos.y = Math.max(b.top + this.heightPx + 10, Math.min(b.floorY, this.pos.y));
+    // Head, antenna/ears and bobbing animations reach ~30% above the nominal height.
+    this.pos.y = Math.max(b.top + this.heightPx * 1.35 + 12, Math.min(b.floorY, this.pos.y));
   }
 
   supported() {

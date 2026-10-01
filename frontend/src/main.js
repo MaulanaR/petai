@@ -151,8 +151,10 @@ function setMood(mood) {
   if (f && S.char) S.char.face.setExpression(f[0], f[1]);
 }
 
-function handleAction({ action }) {
+function handleAction({ occasion, action }) {
   if (!action) return;
+  // An automatic comment is not a reply to whatever the user typed last.
+  if (occasion !== 'chat') bubble.userEl.style.display = 'none';
   const anim = action.animation || (action.speech ? MOOD_ANIM[action.mood] : '');
   if (action.speech || action.suggestion) {
     bubble.say(action.speech, action.suggestion);

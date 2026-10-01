@@ -1,86 +1,224 @@
-# PetAI 🫧
+<p align="center">
+  <img src="docs/icon.png" width="120" alt="PetAI">
+</p>
 
-Desktop pet lucu bergaya doodle (three.js) yang berkeliaran di layar Windows, bisa diklik, diseret,
-diajak ngobrol, dan terhubung ke AI milikmu sendiri (BYOK: Anthropic atau OpenAI/kompatibel).
+<h1 align="center">PetAI</h1>
 
-- **Tanpa jendela aplikasi** — overlay transparan always-on-top yang tembus klik di area kosong;
-  akses lewat ikon tray. Fokus keyboard tidak pernah dicuri.
-- **3 karakter**: Blob Jeli, Kucing, Anak Ayam (warna, nama, kepribadian, ukuran bisa diatur).
-- **3 mode gerak**: 📍 Diam di tempat · 🚶 Jalan di atas taskbar (bisa lompat & nangkring di atas
-  jendela aktif) · 🎈 Melayang bebas.
-- **Interaksi**: klik (reaksi), klik ganda (chat), seret (diangkat & dijatuhkan), klik kanan (menu),
-  "elus" dengan menggosok kursor di atas pet.
-- **AI (opsional, BYOK)**: komentar, saran, chat, memori kebiasaan. Key disimpan di Windows
-  Credential Manager, bukan di file.
-- **Animasi buatan AI**: AI menulis gerakan dalam DSL JSON (data, bukan kode) → divalidasi →
-  disimpan lokal di `%APPDATA%\PetAI\animations` → dipakai ulang tanpa generate ulang.
-- **Privasi opt-in**: izin melihat aktivitas (nama app + judul jendela, disensor) default OFF;
-  screenshot ke vision model adalah toggle terpisah (default OFF, tidak pernah disimpan ke disk);
-  daftar blokir (password manager, perbankan, incognito…); retensi log; tombol hapus semua data.
-  Sembunyi otomatis saat game/presentasi/fullscreen.
+<p align="center">
+  Desktop pet lucu bergaya doodle yang tinggal di layar Windows-mu — bisa diklik, diseret, diajak ngobrol,<br>
+  dan mengomentari apa yang sedang kamu kerjakan memakai AI milikmu sendiri (BYOK).
+</p>
 
-## Menjalankan
+<p align="center">
+  <a href="https://github.com/MaulanaR/petai/releases/latest"><b>⬇️ Unduh rilis terbaru</b></a>
+</p>
 
-Prasyarat: Windows 10/11, Go 1.22+, Node 18+, WebView2 Runtime (bawaan Windows 11).
+<p align="center">
+  <img src="docs/demo-chat.gif" width="540" alt="Pet mengomentari catatan liburan yang sedang dibuka, lalu menjawab chat">
+</p>
+
+| Karakter & animasi | Klik · elus · seret |
+|---|---|
+| <img src="docs/demo-characters.gif" width="360" alt="Tiga karakter"> | <img src="docs/demo-interact.gif" width="400" alt="Interaksi"> |
+
+---
+
+## Daftar isi
+
+- [Fitur](#fitur)
+- [Instalasi](#instalasi)
+- [Mulai cepat (5 menit)](#mulai-cepat-5-menit)
+- [Cara berinteraksi](#cara-berinteraksi)
+- [Mode gerak](#mode-gerak)
+- [Menghubungkan AI (BYOK)](#menghubungkan-ai-byok)
+- [Kapan pet berkomentar](#kapan-pet-berkomentar)
+- [Privasi & data](#privasi--data)
+- [Memori & animasi buatan AI](#memori--animasi-buatan-ai)
+- [Pengaturan](#pengaturan)
+- [Pemecahan masalah](#pemecahan-masalah)
+- [Untuk developer](#untuk-developer)
+
+## Fitur
+
+- **Tanpa jendela aplikasi** — pet hidup di overlay transparan di atas semua jendela. Area di luar pet
+  tembus klik, jadi kamu tetap bisa bekerja seperti biasa. Tidak muncul di taskbar; akses lewat ikon tray.
+- **3 karakter** — 🫧 Blob Jeli, 🐱 Kucing, 🐥 Anak Ayam. Nama, warna, kepribadian, ukuran bisa diubah.
+- **3 mode gerak** — 📍 diam di satu tempat · 🚶 jalan-jalan di atas taskbar & nangkring di atas jendela ·
+  🎈 melayang bebas.
+- **Interaktif** — klik, klik ganda untuk chat, seret & lempar, elus, menu klik kanan.
+- **AI milikmu sendiri** — Anthropic (Claude) atau OpenAI / endpoint kompatibel OpenAI. Key tersimpan aman
+  di Windows Credential Manager.
+- **Peka aktivitas (opsional)** — pet bisa melihat aplikasi & judul jendela yang aktif lalu memberi
+  komentar dan saran yang relevan; bisa juga screenshot ke model vision (izin terpisah).
+- **Ingat kebiasaanmu** — memori lokal (kebiasaan, preferensi, tujuan) yang bisa kamu lihat & hapus.
+- **Gerakan buatan AI** — kalau tidak ada animasi yang cocok, AI merancang gerakan baru (JSON, bukan kode),
+  divalidasi, disimpan lokal, lalu dipakai ulang tanpa generate ulang.
+- **Sopan** — sembunyi otomatis saat game/presentasi/fullscreen, tidak pernah mencuri fokus keyboard,
+  jumlah komentar per jam bisa diatur (0 = hanya saat diajak ngobrol).
+
+## Instalasi
+
+Butuh **Windows 10/11 64-bit**. Unduh dari [Releases](https://github.com/MaulanaR/petai/releases/latest):
+
+| File | Keterangan |
+|---|---|
+| `PetAI-<versi>-windows-amd64-setup.exe` | **Disarankan.** Installer + shortcut Start Menu + uninstaller. Memasang WebView2 Runtime bila belum ada. |
+| `PetAI-<versi>-windows-amd64-portable.exe` | Tanpa instal — simpan di folder mana saja lalu jalankan. |
+
+> Aplikasi belum ditandatangani. Jika muncul **"Windows protected your PC"**, klik **More info → Run anyway**.
+
+## Mulai cepat (5 menit)
+
+1. **Jalankan PetAI.** Pet jatuh dari atas lalu mendarat di atas taskbar. Ikon 🫧 muncul di system tray.
+2. **Buka Pengaturan** — klik kanan pet → ⚙️ *Pengaturan*, atau klik ikon tray → *Pengaturan…*
+3. **Tab 🧠 AI** — pilih provider, tempel API key, klik **Simpan**, lalu **Tes koneksi** dan pilih model.
+4. **(Opsional) Tab 🔒 Privasi** — nyalakan *Izinkan pet melihat aktivitas PC* agar pet bisa berkomentar
+   tentang apa yang sedang kamu buka.
+5. **Klik ganda pet** (atau `Ctrl+Alt+P`) lalu sapa dia. Selesai! 🎉
+
+<p align="center"><img src="docs/settings-pet.png" width="440" alt="Pengaturan karakter"></p>
+
+## Cara berinteraksi
+
+| Aksi | Hasil |
+|---|---|
+| **Klik** pet | Reaksi lucu (lompat, kaget, melambai); kadang menyeletuk |
+| **Klik ganda** pet | Buka chat. Ketik lalu **Enter**; **Esc** untuk menutup |
+| **Seret** pet | Pet terangkat & menggantung; lepas → jatuh (mode jalan) atau pindah posisi (mode diam/melayang). Bisa dilempar! |
+| **Gosok kursor** di atas pet | Dielus → mata hati & ❤️ |
+| **Klik kanan** pet | Menu cepat: chat, tidur/bangun, mode gerak, ganti karakter, pengaturan, sembunyikan 1 jam, keluar |
+| **Ikon tray** | Tampilkan/sembunyikan, chat, pengaturan, *Pause pengamatan*, sembunyikan 1 jam, keluar |
+| **`Ctrl+Alt+P`** | Buka chat dari mana saja |
+
+Pet juga punya kehidupan sendiri: berkedip, menatap kursor, jalan-jalan, duduk, dan **tidur** saat kamu
+tidak menyentuh PC lebih dari 5 menit — lalu bangun menyapa saat kamu kembali.
+
+## Mode gerak
+
+| Mode | Perilaku |
+|---|---|
+| 📍 **Diam** | Tetap di satu tempat, hanya animasi di tempat. Seret untuk memindah — posisi diingat. |
+| 🚶 **Jalan** | Berjalan di atas taskbar, sesekali melompat & **nangkring di tepi atas jendela aktif**; jatuh kalau jendelanya dipindah/diminimize. |
+| 🎈 **Melayang** | Terbang pelan ke mana saja di layar, tanpa gravitasi. |
+
+Ganti lewat klik kanan pet → *Gerak*, atau *Pengaturan → 🚶 Gerak* (kecepatan & seberapa aktif berkeliaran).
+
+## Menghubungkan AI (BYOK)
+
+Biaya API ditanggung akunmu sendiri; PetAI tidak punya server. Key disimpan di **Windows Credential
+Manager** (bukan di file) dan tidak pernah dikirim ke tempat lain selain provider yang kamu pilih.
+
+| Provider | Isian di *Pengaturan → 🧠 AI* |
+|---|---|
+| **Anthropic (Claude)** | Provider *Anthropic*, key `sk-ant-…`, model mis. `claude-opus-5-5` (terpintar), `claude-sonnet-5-5`, `claude-haiku-4-5` (terhemat) |
+| **OpenAI** | Provider *OpenAI*, key `sk-…`, klik *Tes koneksi*, pilih model |
+| **Kompatibel OpenAI** (OpenRouter, Ollama, LM Studio, gateway lain) | Provider *OpenAI*, buka *Lanjutan* → isi **Base URL** (mis. `https://openrouter.ai/api/v1`, `http://localhost:11434/v1`) |
+
+Tips hemat: pakai model kecil untuk obrolan sehari-hari dan turunkan slider **"Seberapa cerewet"**
+(0 = pet hanya bicara saat diajak). Model harus mendukung *structured output / JSON schema*.
+
+Cek koneksi tanpa membuka pet (butuh Go): `go run ./cmd/petai-check -provider openai -model <model> -base <url>`
+— menampilkan daftar model, balasan chat, dan contoh komentar atas jendela yang sedang aktif.
+
+## Kapan pet berkomentar
+
+| Momen | Contoh |
+|---|---|
+| Baru dibuka / kamu kembali setelah ≥10 menit | Sapaan |
+| Pindah ke aplikasi baru ±2 menit* | "Lagi nyusun catatan liburan, ya? …" + 💡 saran |
+| ±50 menit di aplikasi yang sama* | Ajakan istirahat sejenak |
+| Larut malam (23.00–04.00) | Pengingat tidur |
+| Sesekali acak | Celetukan lucu |
+| Screenshot berkala* (izin terpisah) | Komentar berdasarkan isi layar |
+
+\* hanya jika *Izinkan pet melihat aktivitas* dinyalakan. Semua komentar otomatis dibatasi
+**maks N per jam** (default 12, jeda minimal 3 menit) dan berhenti saat ada aplikasi fullscreen.
+
+## Privasi & data
+
+<p align="center"><img src="docs/settings-privacy.png" width="440" alt="Pengaturan privasi"></p>
+
+- **Default: tidak mengamati apa pun.** Pengamatan aktivitas dan screenshot harus kamu nyalakan sendiri.
+- **Yang dikirim ke AI** (bila diizinkan): nama exe aplikasi aktif + judul jendela yang **disensor**
+  (email, nomor ≥6 digit, token/API key, query URL, nama user di path `C:\Users\…`).
+- **Tidak pernah**: keylogger, isi clipboard, isi file, screenshot ke disk.
+- **Daftar blokir** — aplikasi/judul yang cocok (password manager, perbankan, chat, incognito, prompt
+  kredensial Windows, …) tidak pernah dicatat maupun dikirim. Bisa kamu tambah sendiri.
+- **Screenshot** (opsional): diperkecil, hanya dikirim saat momen screenshot, pet memakai 👓 sesaat sebelumnya.
+  Pet sendiri disembunyikan dari screenshot & screen share.
+- **Pause pengamatan** kapan saja dari ikon tray.
+- **Lokasi data**: `%APPDATA%\PetAI\` — `config.json`, `petai.db` (log aktivitas, memori, chat),
+  `animations\`, `logs\`. Log aktivitas otomatis dihapus setelah N hari (default 14).
+  *Pengaturan → Privasi → Hapus semua data pribadi* menghapus log aktivitas, memori, dan riwayat chat.
+
+## Memori & animasi buatan AI
+
+- **Memori** (*Pengaturan → 📒 Memori*): hal yang pet pelajari tentangmu dari obrolan & pola pemakaian
+  (mis. jam mulai kerja, aplikasi favorit). Bisa diedit, dihapus, ditambah manual, atau *Lupakan semua*.
+  Sehari sekali pet merangkum kebiasaan dari statistik lokal.
+- **Animasi** (*Pengaturan → 🎞️ Animasi*): 13 gerakan bawaan + gerakan buatan AI. Klik ▶ untuk
+  memutar, ⧉ untuk menyalin JSON, 🗑 untuk menghapus, atau impor JSON gerakan buatanmu sendiri.
+  Format gerakan didokumentasikan di [`qa/CONTRACT.md`](qa/CONTRACT.md#animationspec-dsl).
+
+## Pengaturan
+
+| Tab | Isi |
+|---|---|
+| 🐾 Karakter | Pilih karakter, nama, warna, kepribadian, bahasa (Indonesia/English), ukuran |
+| 🚶 Gerak | Mode gerak, kecepatan, seberapa aktif, kembalikan posisi |
+| 🧠 AI | Aktif/nonaktif, provider, API key, model, base URL, tes koneksi, batas komentar per jam |
+| 🔒 Privasi | Izin melihat aktivitas, screenshot & intervalnya, daftar blokir, retensi log, sembunyi dari screen share, hapus data |
+| 📒 Memori | Daftar memori + ringkasan pemakaian 7 hari |
+| 🎞️ Animasi | Pustaka gerakan, putar/ekspor/hapus/impor |
+| ⚙️ Umum | Jalan saat Windows mulai, sembunyi saat fullscreen, FPS, monitor, log debug, buka folder data |
+
+## Pemecahan masalah
+
+| Masalah | Solusi |
+|---|---|
+| Pet tidak terlihat | Klik ikon tray → *Tampilkan pet*. Saat ada aplikasi fullscreen pet memang sembunyi. Coba *Pengaturan → Gerak → Kembalikan posisi pet*. |
+| Chat tidak dibalas | *Pengaturan → AI → Tes koneksi*. Pastikan AI aktif, key tersimpan, model dipilih, dan model mendukung JSON schema. Lihat `%APPDATA%\PetAI\logs\petai.log`. |
+| Pet tidak pernah berkomentar sendiri | Nyalakan *Izinkan pet melihat aktivitas*, pastikan slider "cerewet" > 0, dan tunggu ±2 menit di sebuah aplikasi. Aplikasi di daftar blokir sengaja diabaikan. |
+| Tidak bisa mengetik di chat | Klik ganda pet sekali lagi; ketik setelah kotak input menyala biru. |
+| Ingin PetAI jalan otomatis | *Pengaturan → Umum → Jalankan saat Windows mulai*. |
+| Ingin menghapus key | *Pengaturan → AI → Hapus*, atau Windows *Credential Manager* → entri `PetAI:anthropic` / `PetAI:openai`. |
+| Keluar | Ikon tray → *Keluar* (Alt+F4 sengaja dinonaktifkan agar pet tidak tertutup tak sengaja). |
+
+## Untuk developer
+
+**Stack:** Go 1.26+ · [Wails v2](https://wails.io) · vanilla JS · [three.js](https://threejs.org) ·
+SQLite (`modernc.org/sqlite`, tanpa CGO) · `anthropic-sdk-go` · `openai-go v3`.
 
 ```bash
-powershell -ExecutionPolicy Bypass -File scripts/build.ps1
+powershell -ExecutionPolicy Bypass -File scripts/build.ps1          # build\bin\petai.exe
+powershell -ExecutionPolicy Bypass -File scripts/build.ps1 -Installer  # + installer NSIS (butuh makensis)
+powershell -ExecutionPolicy Bypass -File scripts/dev.ps1            # wails dev (hot reload)
+npm --prefix frontend run dev                                       # lalu buka /preview.html: preview karakter tanpa Wails
+go test ./...
 ```
 
-Hasil: `build\bin\petai.exe`. Jalankan, lalu klik kanan ikon tray → **Pengaturan → AI** untuk
-memasukkan API key. Pintasan **Ctrl+Alt+P** membuka chat.
+Skrip memakai `go run github.com/wailsapp/wails/v2/cmd/wails@v2.16.0` (Wails CLI v2.9.x gagal membuat
+bindings di Go 1.26+).
 
-Mode pengembangan (hot reload):
-
-```bash
-powershell -ExecutionPolicy Bypass -File scripts/dev.ps1
-```
-
-> Skrip memakai `go run github.com/wailsapp/wails/v2/cmd/wails@v2.16.0` karena Wails CLI v2.9.1
-> gagal membuat bindings di Go 1.26+. Alternatif: `go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0`.
-
-Preview karakter & animasi di browser biasa (tanpa Wails): `npm --prefix frontend run dev` lalu buka
-`http://localhost:5173/preview.html`.
-
-Installer NSIS: `scripts/build.ps1 -Installer` (butuh `makensis` di PATH).
-
-## Cek koneksi AI
-
-Tes key/model/base URL tanpa membuka pet (key dibaca dari Credential Manager, tidak pernah dicetak):
-
-```bash
-go run ./cmd/petai-check -provider openai -model <model> -base <url> -chat "halo!"
-```
-
-Menampilkan: daftar model, balasan chat, dan komentar pet tentang jendela yang sedang aktif
-(`-fg-app code.exe -fg-title "..."` untuk simulasi). `-save` menulis pengaturan yang lolos tes ke config app.
-
-## Struktur
+**Rilis:** push tag `vX.Y.Z` → GitHub Actions ([`.github/workflows/release.yml`](.github/workflows/release.yml))
+membangun exe portable + installer, lalu membuat GitHub Release otomatis dengan catatan dari
+[`docs/RELEASE_NOTES.md`](docs/RELEASE_NOTES.md).
 
 ```
 main.go, app.go            Wails app + method yang dipanggil frontend
+cmd/petai-check            Cek koneksi AI dari command line
 internal/overlay           Win32: overlay transparan, click-through dinamis, fokus, DPI
 internal/watcher           Jendela aktif, idle, DND/fullscreen, screenshot, sensor & blocklist
 internal/brain             Kapan pet bicara, prompt, structured output, animasi & memori
-internal/ai                Provider Anthropic (anthropic-sdk-go) & OpenAI (openai-go v3)
-internal/anim              DSL animasi, validasi, library lokal + animasi bawaan (builtin/*.json)
+internal/ai                Provider Anthropic & OpenAI(-compatible)
+internal/anim              DSL animasi, validasi, pustaka lokal + 13 animasi bawaan
 internal/store             SQLite: aktivitas, memori, chat
 internal/config, secrets   config.json & Windows Credential Manager
 internal/tray, sys         Ikon tray, autostart, hotkey
-internal/debugapi          API QA lokal (hanya bila PETAI_DEBUG_ADDR diset)
+internal/debugapi          API QA lokal (hanya aktif bila PETAI_DEBUG_ADDR diset)
 frontend/src               three.js: karakter, player DSL, behavior, bubble, menu, pengaturan
-qa/                        Kontrak uji + harness QA independen
+qa/                        Kontrak uji + harness QA (mock AI, skrip PowerShell)
 ```
 
-## Data
-
-`%APPDATA%\PetAI\` → `config.json`, `petai.db`, `animations\`, `logs\petai.log`.
-Override dengan env `PETAI_DATA_DIR`. Lihat `qa/CONTRACT.md` untuk env uji lainnya
-(`PETAI_DEBUG_ADDR`, `PETAI_FAST`, base URL & key override).
-
-## Model AI
-
-Default Anthropic `claude-opus-5-5` (effort `low` untuk obrolan, `medium` untuk membuat animasi &
-merangkum memori). Pilih `claude-sonnet-5-5` / `claude-haiku-4-5` di Pengaturan untuk lebih hemat.
-OpenAI: pilih model setelah **Tes koneksi**; base URL bisa diarahkan ke OpenRouter/Ollama/LM Studio.
-Server-side refusal fallback aktif otomatis untuk model Claude yang mendukungnya.
+Variabel lingkungan untuk pengujian (`PETAI_DATA_DIR`, `PETAI_DEBUG_ADDR`, `PETAI_FAST`, override base URL
+& key) didokumentasikan di [`qa/CONTRACT.md`](qa/CONTRACT.md).

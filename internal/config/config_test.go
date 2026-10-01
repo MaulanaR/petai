@@ -42,6 +42,23 @@ func TestZeroCallsMeansNoAutomaticComments(t *testing.T) {
 	}
 }
 
+func TestLoadBOMAndCorrupt(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "config.json")
+	_ = os.WriteFile(p, []byte("\xef\xbb\xbf{\"movement\":{\"mode\":\"free\"}}"), 0o600)
+	m, err := Load(p)
+	if err != nil || m.Get().Movement.Mode != "free" {
+		t.Fatalf("BOM config not read: %v %+v", err, m.Get().Movement)
+	}
+	_ = os.WriteFile(p, []byte("{broken"), 0o600)
+	if _, err := Load(p); err != nil {
+		t.Fatal(err)
+	}
+	if b, err := os.ReadFile(p + ".bak"); err != nil || string(b) != "{broken" {
+		t.Fatal("corrupt config not backed up")
+	}
+}
+
 func TestLoadPartialAndMerge(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "config.json")

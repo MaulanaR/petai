@@ -31,7 +31,8 @@ import (
 	"petai/internal/win"
 )
 
-const appVersion = "0.1.0"
+// appVersion is overridden at release build time: -ldflags "-X main.appVersion=x.y.z".
+var appVersion = "0.1.0"
 
 // PetState is reported by the frontend (CSS px relative to the overlay).
 type PetState struct {

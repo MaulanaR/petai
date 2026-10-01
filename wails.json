@@ -9,5 +9,12 @@
   "author": {
     "name": "MaulanaR",
     "email": "maulana@assistxenterprise.ai"
+  },
+  "info": {
+    "companyName": "MaulanaR",
+    "productName": "PetAI",
+    "productVersion": "0.1.0",
+    "copyright": "Copyright © 2026 MaulanaR",
+    "comments": "AI desktop pet (Go + Wails + three.js)"
   }
 }

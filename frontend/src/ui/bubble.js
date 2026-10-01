@@ -36,6 +36,7 @@ export class Bubble {
       this.setThinking(true);
       this.textEl.textContent = '';
       this.tipEl.textContent = '';
+      this.tipEl.style.display = 'none';
       this.onSend(text);
     });
     this.input.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.close(); });

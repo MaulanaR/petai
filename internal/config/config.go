@@ -2,6 +2,7 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -213,9 +214,13 @@ func Load(path string) (*Manager, error) {
 	m := &Manager{path: path, cfg: Default()}
 	b, err := os.ReadFile(path)
 	if err == nil {
+		b = bytes.TrimPrefix(b, []byte("\xef\xbb\xbf")) // Notepad/PowerShell may add a UTF-8 BOM
 		cfg := Default()
 		if jerr := json.Unmarshal(b, &cfg); jerr == nil {
 			m.cfg = cfg
+		} else {
+			// Keep the unreadable file for the user instead of silently losing it.
+			_ = os.WriteFile(path+".bak", b, 0o600)
 		}
 	} else if !os.IsNotExist(err) {
 		return nil, err
