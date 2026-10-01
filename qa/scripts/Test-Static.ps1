@@ -189,6 +189,9 @@ try {
     $nsi = @(Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'build\windows') -Recurse -File -Filter '*.nsi' -ErrorAction SilentlyContinue)
     $inst = @(Get-ChildItem -LiteralPath (Join-Path $RepoRoot 'build\bin') -File -Filter '*installer*.exe' -ErrorAction SilentlyContinue)
     if ($inst.Count -gt 0) { Add-QaResult -Id 'AC-05' -Status PASS -Message ("installer built: {0} ({1:N1} MB) - install/uninstall on a clean machine is manual (M-20)" -f $inst[0].Name, ($inst[0].Length / 1MB)) }
+    elseif ($nsi.Count -gt 0 -and -not (Get-Command makensis -ErrorAction SilentlyContinue) -and -not (Test-Path 'C:\Program Files (x86)\NSIS\makensis.exe') -and -not (Test-Path 'C:\Program Files\NSIS\makensis.exe')) {
+        Add-QaResult -Id 'AC-05' -Status SKIP -Message ("blocked by environment: NSIS (makensis) is not installed, so 'wails build -nsis' cannot run; NSIS project present ({0}). Installer unverified." -f $nsi[0].Name)
+    }
     elseif ($nsi.Count -gt 0) { Add-QaResult -Id 'AC-05' -Status FAIL -Message ("NSIS project present ({0}) but no installer in build/bin - run 'wails build -nsis'" -f $nsi[0].Name) }
     else { Add-QaResult -Id 'AC-05' -Status FAIL -Message "no NSIS installer project or installer ('wails build -nsis' never run)" }
 

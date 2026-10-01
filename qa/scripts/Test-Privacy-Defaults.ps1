@@ -82,6 +82,7 @@ try {
     if ($script:QaCharacters -notcontains (Get-QaProp $src 'pet.character')) { $other += "pet.character=$(Get-QaProp $src 'pet.character')" }
     if ($script:QaModes -notcontains (Get-QaProp $src 'movement.mode')) { $other += "movement.mode=$(Get-QaProp $src 'movement.mode')" }
     if ((Get-QaProp $src 'ai.anthropic.model') -ne 'claude-opus-5-5') { $other += "ai.anthropic.model=$(Get-QaProp $src 'ai.anthropic.model')" }
+    if ((Get-QaProp $src 'pet.language') -ne 'id') { $other += "pet.language=$(Get-QaProp $src 'pet.language') (contract: default id)" }
     $cfgText = if (Test-Path $cfgPath) { [IO.File]::ReadAllText($cfgPath) } else { '' }
     if ($cfgText -match '(?i)"(api_?key|apikey|secret|token)"') { $other += 'config.json contains a key/secret/token field' }
     if ($other.Count -eq 0) { Add-QaResult -Id 'AC-95' -Status PASS -Message 'contract defaults present (blocklist, retentionDays=14, excludeFromCapture, maxCallsPerHour=12, version=1, default model)' -Evidence @{ config = $src } }

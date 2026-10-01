@@ -137,12 +137,12 @@ try {
     Start-Sleep -Seconds 5
     $noise = @(Get-MockAiRequests -MockAddr $MockAddr)
     if ($noise.Count -gt 0) {
-        Add-QaResult -Id 'AC-63' -Status WARN -Message ("{0} automatic AI call(s) in 5 s although ai.maxCallsPerHour=0 (0 may mean 'unlimited' - contract gap); counts below filter by occasion" -f $noise.Count) -Evidence @{ occasions = @($noise | ForEach-Object { $_.occasion }) }
+        Add-QaResult -Id 'AC-63' -Status FAIL -Message ("{0} automatic AI call(s) in 5 s although ai.maxCallsPerHour=0 (contract: 0 = no automatic comments)" -f $noise.Count) -Evidence @{ occasions = @($noise | ForEach-Object { $_.occasion }) }
     }
 
     if (-not $SkipWindows) {
         $tokA = New-QaToken 'QAPROBE'
-        $probeTitle = "QA Activity Probe $tokA mail qa.user@example.com id 98765432101"
+        $probeTitle = "$tokA qa.user@example.com 98765432101 C:\Users\QaPerson\notes.txt https://ex.com/p?t=QAQUERYSECRET sk-QAFAKEKEY0123456789abcdefXYZ"
         $probeWin = Start-QaWindow -Title $probeTitle -X 260 -Y 220 -W 640 -H 360 -Color 'C8E6FF' -Foreground
         $windows += $probeWin
     }
@@ -237,15 +237,18 @@ try {
             elseif (-not $r.hasActivity) { [void]$f.Add('watchActivity=true but the request has no activity key') }
             else {
                 $app = "$(Get-QaProp $r.activity 'app')"; $title = "$(Get-QaProp $r.activity 'title')"
-                if ($app -notlike '*QaWindow.exe') { [void]$f.Add("activity.app='$app', expected the foreground exe QaWindow.exe") }
-                elseif ($app -ne 'QaWindow.exe' -and $app -ne 'qawindow.exe') { Add-QaResult -Id 'AC-52' -Status WARN -Message "${P}activity.app is a full path ('$app'): leaks local folder/user names; contract example is a bare exe name" }
+                if ($app -notlike '*QaWindow.exe') { [void]$f.Add("activity.app='$app', expected the foreground exe qawindow.exe") }
+                elseif ($app -match '[\\/:]') { [void]$f.Add("activity.app is a path ('$app'), contract: bare exe name (paths leak the user name)") }
+                elseif ($app -cne $app.ToLower()) { Add-QaResult -Id 'AC-52' -Status WARN -Message "${P}activity.app '$app' is not lower-case (contract: bare lower-case exe name)" }
                 if ($title -notlike "*$tokA*") { [void]$f.Add("activity.title '$title' is not the foreground window title") }
                 if ($title -notlike '*`[email`]*') { [void]$f53.Add("email not redacted to [email] in '$title'") }
                 if ($title -notlike '*`[num`]*') { [void]$f53.Add("11-digit number not redacted to [num] in '$title'") }
+                if ($title -notlike '*`[user`]*') { [void]$f53.Add("C:\Users\<name> not redacted to [user] in '$title'") }
+                if ($title.Length -gt 160) { [void]$f53.Add("title longer than 160 chars ($($title.Length))") }
             }
-            $raw = Search-Mock -MockAddr $MockAddr -Needles @('qa.user@example.com', '98765432101') -Since $o.Since
-            if ($raw['qa.user@example.com'].Count -gt 0) { [void]$f53.Add('raw e-mail address present in a request body') }
-            if ($raw['98765432101'].Count -gt 0) { [void]$f53.Add('raw 11-digit number present in a request body') }
+            $rawNeedles = @('qa.user@example.com', '98765432101', 'QaPerson', 'QAQUERYSECRET', 'sk-QAFAKEKEY0123456789abcdefXYZ')
+            $raw = Search-Mock -MockAddr $MockAddr -Needles $rawNeedles -Since $o.Since
+            foreach ($rn in $rawNeedles) { if ($raw[$rn].Count -gt 0) { [void]$f53.Add("raw '$rn' present in a request body (contract: redact email/[num]/[user]/URL query/[secret])") } }
             Complete-Check -Id 'AC-52' -Fails $f -Prefix $P -PassMsg ("watchActivity=true: activity {0}" -f (Format-QaJson $r.activity)) -Evidence @{ request = (Show-Req $r) }
             Complete-Check -Id 'AC-53' -Fails $f53 -Prefix $P -PassMsg ("title redacted: {0}" -f "$(Get-QaProp $r.activity 'title')") -Evidence @{ activity = $r.activity }
 
@@ -422,9 +425,15 @@ try {
             }
             $invEv += [ordered]@{ scenario = $sc; name = $bad; specCalls = $specN; savedFiles = @($saved | ForEach-Object { $_.FullName }); listed = $listedBad.Count; inIndex = $idx; alive = $alive.Alive; petAnimation = $cur; traversalFiles = $evil }
             if (-not $alive.Alive) { [void]$f82.Add("$sc killed/hung the app"); break }
-            if ($specN -ne 1) { [void]$f82.Add("$sc -> $specN animation_spec calls (contract: exactly one, then reject)") }
-            if ($saved.Count -gt 0 -or $listedBad.Count -gt 0 -or $idx) { [void]$f82.Add("$sc -> invalid spec '$bad' was saved/listed") }
-            if ($cur -eq $bad) { [void]$f82.Add("$sc -> pet is playing the invalid animation") }
+            if ($specN -ne 1) { [void]$f82.Add("$sc -> $specN animation_spec calls (contract: exactly one)") }
+            if ($sc -ne 'invalid_anim_name') {
+                # (invalid_anim_name: contract clarification - the saved name is always the requested name, so saving it as qa_bad_name is correct)
+                if ($saved.Count -gt 0 -or $listedBad.Count -gt 0 -or $idx) { [void]$f82.Add("$sc -> invalid spec '$bad' was saved/listed") }
+                if ($cur -eq $bad) { [void]$f82.Add("$sc -> pet is playing the invalid animation") }
+            } elseif ($saved.Count -gt 0) {
+                $vr = Test-MockSpec -MockAddr $MockAddr -JsonText ([IO.File]::ReadAllText($saved[0].FullName))
+                if ($vr.name -ne $bad) { [void]$f84.Add("spec with name '../../qa_evil' was saved with name '$($vr.name)' instead of the requested '$bad'") }
+            }
             if ($sc -in @('invalid_anim_code', 'invalid_anim_prop', 'invalid_anim_slot') -and ($saved.Count -gt 0 -or $listedBad.Count -gt 0)) { [void]$f84.Add("$sc (code-like/prototype values) accepted") }
             if ($evil.Count -gt 0) { [void]$f84.Add("path-traversal name wrote a file outside animations\: $($evil -join ', ')") }
         }
