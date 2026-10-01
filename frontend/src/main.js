@@ -9,6 +9,8 @@ import { Menu } from './ui/menu.js';
 import { Effects } from './ui/effects.js';
 import { Settings } from './ui/settings.js';
 import { setLang, t, line } from './i18n.js';
+import { PropStage } from './stage.js';
+import { ActivityRunner, ACTIVITIES } from './activities.js';
 
 const BASE_UNIT = 110; // px per world unit at scale 1
 const MOOD_FACE = {
@@ -42,10 +44,13 @@ const S = {
   focus: false,
   facingY: 0,
   hidden: false,
+  petHidden: false,
+  lastActivity: performance.now() - 4 * 60000, // first random activity ~1.5 min after start
 };
 
 const view = new PetView(root);
 const fx = new Effects(root);
+const stage = new PropStage(root);
 const bubble = new Bubble(root, { onSend: sendChat, onClose: () => updateFocus(), t });
 const menu = new Menu(root, t);
 const settings = new Settings(root, {
@@ -66,6 +71,29 @@ const pet = new PetBehavior({
   },
   onStateChange: () => {},
 });
+
+const runner = new ActivityRunner({
+  pet, view, stage, bubble, fx, line, bounds,
+  getChar: () => S.char,
+  getPlayer: () => S.player,
+  setPetHidden: (h) => { S.petHidden = h; view.setVisible(!h); },
+  onEnd: () => { S.lastActivity = performance.now(); },
+});
+pet.onRandomActivity = () => maybeRandomActivity();
+
+const ACTIVITY_WEIGHTS = [['football', 3], ['basketball', 3], ['golf', 3], ['toilet', 1.5]];
+
+/** Random prop activity, at most every 3–8 minutes depending on "seberapa aktif". */
+function maybeRandomActivity() {
+  if (runner.running || bubble.chatOpen || settings.open || S.down || pet.away) return false;
+  const act = S.cfg?.movement?.activity ?? 0.5;
+  if (performance.now() - S.lastActivity < (8 - 5 * act) * 60000) return false;
+  let r = Math.random() * ACTIVITY_WEIGHTS.reduce((a, [, w]) => a + w, 0);
+  for (const [name, w] of ACTIVITY_WEIGHTS) {
+    if ((r -= w) <= 0) return runner.start(name);
+  }
+  return false;
+}
 
 // ---------------- character ----------------
 
@@ -151,19 +179,29 @@ function setMood(mood) {
   if (f && S.char) S.char.face.setExpression(f[0], f[1]);
 }
 
+const slugName = (n) => String(n).toLowerCase().trim().replace(/[-\s]+/g, '_').replace(/[^a-z0-9_]/g, '').replace(/^_+|_+$/g, '').slice(0, 40);
+
 function handleAction({ occasion, action }) {
   if (!action) return;
   // An automatic comment is not a reply to whatever the user typed last.
   if (occasion !== 'chat') bubble.userEl.style.display = 'none';
   const anim = action.animation || (action.speech ? MOOD_ANIM[action.mood] : '');
-  if (action.speech || action.suggestion) {
-    bubble.say(action.speech, action.suggestion);
+  // A brand-new move is being designed by the AI right now: tell the user it's coming.
+  const req = action.new_animation_request;
+  const learning = req && req.name && !S.player.has(slugName(req.name));
+  if (learning) S.learning = { name: slugName(req.name), until: performance.now() + 150000 };
+  const tip = action.suggestion || (learning ? t('learningMove') : '');
+  if (action.speech || tip) {
+    bubble.say(action.speech, tip, learning ? 60 : undefined);
     const secs = Math.min(14, 4 + ((action.speech || '').length + (action.suggestion || '').length) / 14);
     pet.talk(secs, anim);
   } else if (anim) {
     pet.react(anim);
   }
   setTimeout(() => setMood(action.mood), 60);
+  if (action.activity && ACTIVITIES.includes(action.activity)) {
+    setTimeout(() => runner.start(action.activity), 700);
+  }
 }
 
 async function sendChat(text) {
@@ -200,8 +238,9 @@ function inRect(r, x, y) {
 }
 
 window.addEventListener('mousedown', (e) => {
-  if (e.button !== 0 || !inRect(petRect(), e.clientX, e.clientY)) return;
+  if (e.button !== 0 || S.petHidden || !inRect(petRect(), e.clientX, e.clientY)) return;
   e.preventDefault();
+  if (runner.running) runner.abort(); // grabbing the pet interrupts its game
   S.down = { x: e.clientX, y: e.clientY, t: performance.now(), ox: pet.pos.x - e.clientX, oy: pet.pos.y - e.clientY };
   api.SetForceInteractive(true);
 });
@@ -298,6 +337,12 @@ function openMenu(x, y) {
       { label: '🚶 ' + t('modeGround'), checked: c.movement.mode === 'ground', onClick: () => setMode('ground') },
       { label: '🎈 ' + t('modeFree'), checked: c.movement.mode === 'free', onClick: () => setMode('free') },
     ] },
+    { label: t('menuPlay'), row: [
+      { label: '⚽', title: 'Sepak bola', onClick: () => runner.start('football') },
+      { label: '🏀', title: 'Basket', onClick: () => runner.start('basketball') },
+      { label: '⛳', title: 'Golf', onClick: () => runner.start('golf') },
+      { label: '🚽', title: 'Toilet', onClick: () => runner.start('toilet') },
+    ] },
     { label: t('menuChar'), row: [
       { label: '🫧', title: 'Blob', checked: c.pet.character === 'blob', onClick: () => setChar('blob') },
       { label: '🐱', title: 'Kucing', checked: c.pet.character === 'cat', onClick: () => setChar('cat') },
@@ -335,7 +380,14 @@ on('pet:anim-added', (spec) => {
     S.player.load([spec]);
   }
 });
-on('pet:play', (name) => pet.react(name));
+on('pet:play', (name) => {
+  if (S.learning && S.learning.name === name) {
+    S.learning = null;
+    bubble.say(line('learnedMove'), '', 3);
+  }
+  pet.react(name);
+});
+on('pet:activity', (name) => runner.start(name));
 on('ai:thinking', (onOff) => { if (bubble.chatOpen) bubble.setThinking(onOff); });
 on('ai:error', (msg) => {
   if (!bubble.chatOpen) return;
@@ -376,6 +428,7 @@ function frame(now) {
   last = now;
   const d = Math.min(dt, 0.1);
 
+  runner.update(d);
   pet.update(d);
   S.player.update(d);
   const face = S.char.face;
@@ -400,11 +453,12 @@ function frame(now) {
   view.place(pet.pos.x, pet.pos.y);
   view.wobble(d);
   view.render();
+  stage.update(d);
   bubble.place(head.x, head.y, pet.pos.y, bounds().width);
 
   // hit regions → Go (throttled)
   if (now - S.lastRegionSend > 60) {
-    const regions = [petRect(), bubble.rect(), menu.rect(), settings.rect()].filter(Boolean)
+    const regions = [S.petHidden ? null : petRect(), bubble.rect(), menu.rect(), settings.rect()].filter(Boolean)
       .map((r) => ({ x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h) }));
     const key = JSON.stringify(regions);
     if (key !== S.lastRegions) {
@@ -418,7 +472,7 @@ function frame(now) {
     const r = petRect() || { x: 0, y: 0, w: 0, h: 0 };
     api.ReportPetState({
       x: r.x, y: r.y, w: r.w, h: r.h, character: S.char.id, mode: pet.mode,
-      state: pet.state, animation: S.player.name, visible: true,
+      state: runner.running ? 'activity:' + runner.name : pet.state, animation: S.player.name, visible: !S.petHidden,
       viewW: window.innerWidth, viewH: window.innerHeight,
       scrollY: (document.scrollingElement || document.documentElement).scrollTop + (window.visualViewport ? window.visualViewport.offsetTop : 0),
       dpr: window.devicePixelRatio,

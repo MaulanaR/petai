@@ -68,7 +68,8 @@ func TestLibraryBuiltinsSaveLookupReuse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, n := range []string{"idle", "walk", "float", "sleep", "jump", "wave", "happy_bounce", "surprised", "dangle", "fall", "land", "sit", "look_around"} {
+	for _, n := range []string{"idle", "walk", "float", "sleep", "jump", "wave", "happy_bounce", "surprised", "dangle", "fall", "land", "sit", "look_around",
+		"kick", "dribble", "throw", "golf_swing", "mulas", "relieved"} {
 		if s, ok := l.Lookup(n, "cat"); !ok || !s.Builtin {
 			t.Errorf("missing builtin %s", n)
 		}

@@ -13,7 +13,12 @@ type PetAction struct {
 	NewAnimationRequest *AnimReq   `json:"new_animation_request"`
 	MemoryOps           []MemoryOp `json:"memory_ops"`
 	Suggestion          string     `json:"suggestion"`
+	// Activity starts a scripted prop activity ("" = none).
+	Activity string `json:"activity"`
 }
+
+// Activities are scripted mini-scenes with props, played by the frontend.
+var Activities = []string{"football", "basketball", "golf", "toilet"}
 
 type AnimReq struct {
 	Name        string `json:"name"`
@@ -74,7 +79,8 @@ var PetActionSchema = mustJSON(obj(map[string]any{
 	},
 	"memory_ops": map[string]any{"type": "array", "items": memoryOpSchema()},
 	"suggestion": map[string]any{"type": "string", "description": "short practical suggestion, or ''"},
-}, "speech", "mood", "animation", "new_animation_request", "memory_ops", "suggestion"))
+	"activity":   strEnum(append([]string{""}, Activities...)...),
+}, "speech", "mood", "animation", "new_animation_request", "memory_ops", "suggestion", "activity"))
 
 var MemoryOpsSchema = mustJSON(obj(map[string]any{
 	"memory_ops": map[string]any{"type": "array", "items": memoryOpSchema()},
@@ -104,12 +110,12 @@ var AnimationSpecSchema = mustJSON(obj(map[string]any{
 	}, "slot", "prop", "times", "values", "interp")},
 	"expressions": map[string]any{"type": "array", "items": obj(map[string]any{
 		"t":     map[string]any{"type": "number"},
-		"eyes":  strEnum("neutral", "happy", "sleepy", "surprised", "angry", "love", "closed"),
-		"mouth": strEnum("neutral", "smile", "open", "frown", "o"),
+		"eyes":  strEnum("neutral", "happy", "sleepy", "surprised", "angry", "love", "closed", "pain"),
+		"mouth": strEnum("neutral", "smile", "open", "frown", "o", "wavy"),
 	}, "t", "eyes", "mouth")},
 	"effects": map[string]any{"type": "array", "items": obj(map[string]any{
 		"t":    map[string]any{"type": "number"},
-		"type": strEnum("hearts", "sparkles", "sweat", "zzz", "question", "exclaim"),
+		"type": strEnum("hearts", "sparkles", "sweat", "zzz", "question", "exclaim", "notes"),
 	}, "t", "type")},
 }, "name", "description", "tags", "target", "duration", "loop", "tracks", "expressions", "effects"))
 
@@ -135,6 +141,15 @@ func (a *PetAction) Sanitize() {
 	}
 	if a.NewAnimationRequest != nil && strings.TrimSpace(a.NewAnimationRequest.Name) == "" {
 		a.NewAnimationRequest = nil
+	}
+	known := false
+	for _, v := range Activities {
+		if a.Activity == v {
+			known = true
+		}
+	}
+	if !known {
+		a.Activity = ""
 	}
 }
 

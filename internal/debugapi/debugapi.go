@@ -21,6 +21,7 @@ type Backend interface {
 	Play(name string) error
 	Memories() (any, error)
 	OpenUI(what string) error
+	Activity(name string) error
 }
 
 // Start serves on addr (must be a loopback address). Returns a shutdown func.
@@ -89,6 +90,15 @@ func Start(addr string, b Backend, logf func(string, ...any)) (func(), error) {
 		var in struct{ Open string }
 		_ = json.NewDecoder(r.Body).Decode(&in)
 		err := b.OpenUI(in.Open)
+		reply(w, map[string]any{"ok": err == nil}, err)
+	})
+	mux.HandleFunc("/debug/activity", func(w http.ResponseWriter, r *http.Request) {
+		if !post(w, r) {
+			return
+		}
+		var in struct{ Name string }
+		_ = json.NewDecoder(r.Body).Decode(&in)
+		err := b.Activity(in.Name)
 		reply(w, map[string]any{"ok": err == nil}, err)
 	})
 	ln, err := net.Listen("tcp", addr)

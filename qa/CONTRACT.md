@@ -78,6 +78,8 @@ Only when env `PETAI_DEBUG_ADDR` is set (e.g. `127.0.0.1:47611`). Binds that add
 - `GET  /debug/animations` → `[{"name","target","description","tags","builtin":bool}]`.
 - `POST /debug/play` `{"name":"wave"}` → plays a library animation (no AI call).
 - `GET  /debug/memories` → `[{"id","kind","content","source","confidence"}]`.
+- `POST /debug/activity` `{"name":"football|basketball|golf|toilet"}` → starts that prop scene now.
+  While it runs `/debug/state.pet.state` is `"activity:<name>"`; during the toilet scene `pet.visible` is false.
 - `POST /debug/ui` `{"open":"settings|chat|menu"}` → opens that UI exactly like the tray / double-click /
   right-click would (chat & settings take keyboard focus; Esc closes them and returns focus).
 - `/debug/state.pet.viewport` = `{w,h,scrollY,dpr}` (CSS px) for coordinate diagnostics.
@@ -110,8 +112,12 @@ non-blocklisted foreground app.
   "animation": "library animation name or ''",
   "new_animation_request": { "name": "snake_case", "description": "string" } | null,
   "memory_ops": [ { "op": "add|update|forget", "id": 0, "kind": "habit|preference|fact|goal", "content": "string" } ],
-  "suggestion": "string ('' = none)" }
+  "suggestion": "string ('' = none)",
+  "activity": "''|football|basketball|golf|toilet" }
 ```
+`activity` starts a scripted prop scene in the frontend (ball, hoop, golf flag, outhouse). Explicit
+user requests ("joget", "salto", "main bola"…) must be fulfilled: a matching catalog animation, else a
+`new_animation_request`, or the activity.
 App behavior: if `animation` exists in library → play it, no extra AI call. If
 `new_animation_request.name` already exists (same target or generic) → play cached, NO
 `animation_spec` call. Otherwise exactly one `[task:animation_spec]` call → validate → save to
@@ -124,8 +130,8 @@ App behavior: if `animation` exists in library → play it, no extra AI call. If
   "tracks": [ { "slot": "root|body|head|eyeL|eyeR|mouth|earL|earR|armL|armR|legL|legR|tail|accessory",
                 "prop": "position.x|position.y|position.z|rotation.x|rotation.y|rotation.z|scale|scale.x|scale.y|scale.z",
                 "times": [0, 0.6, 1.2], "values": [0, 3.14, 6.28], "interp": "linear|smooth|step" } ],
-  "expressions": [ { "t": 0, "eyes": "neutral|happy|sleepy|surprised|angry|love|closed", "mouth": "neutral|smile|open|frown|o" } ],
-  "effects": [ { "t": 0.5, "type": "hearts|sparkles|sweat|zzz|question|exclaim" } ] }
+  "expressions": [ { "t": 0, "eyes": "neutral|happy|sleepy|surprised|angry|love|closed|pain", "mouth": "neutral|smile|open|frown|o|wavy" } ],
+  "effects": [ { "t": 0.5, "type": "hearts|sparkles|sweat|zzz|question|exclaim|notes" } ] }
 ```
 Validation: duration 0 < d ≤ 10; times strictly increasing within [0,duration], same length as
 values; `scale` values are `[x,y,z]` arrays, others numbers; ≤ 24 tracks, ≤ 64 keys/track;
@@ -133,7 +139,8 @@ clamps: rotation ±6.2832, position ±2, scale 0.3–2. Unknown slot/prop → re
 Never executed as code.
 
 Built-in animations (always present, `builtin:true`, target `generic`):
-`idle, walk, float, sleep, jump, wave, happy_bounce, surprised, dangle, fall, land, sit, look_around`.
+`idle, walk, float, sleep, jump, wave, happy_bounce, surprised, dangle, fall, land, sit, look_around,
+kick, dribble, throw, golf_swing, mulas, relieved`.
 
 ## Clarifications (answers to QA Phase 1 gaps)
 - Base URLs: both forms work. Anthropic: a trailing `/v1` is stripped (SDK adds it). OpenAI-compatible:

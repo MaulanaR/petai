@@ -253,6 +253,22 @@ func TestAIDisabledBlocksEveryPath(t *testing.T) {
 	}
 }
 
+func TestSanitizeActivity(t *testing.T) {
+	a := PetAction{Activity: "golf"}
+	a.Sanitize()
+	if a.Activity != "golf" {
+		t.Fatal("known activity dropped")
+	}
+	a = PetAction{Activity: "rm -rf"}
+	a.Sanitize()
+	if a.Activity != "" {
+		t.Fatal("unknown activity kept")
+	}
+	if !strings.Contains(string(PetActionSchema), `"activity"`) {
+		t.Fatal("schema missing activity")
+	}
+}
+
 func TestSchemasAreValidJSON(t *testing.T) {
 	for _, s := range []json.RawMessage{PetActionSchema, AnimationSpecSchema, MemoryOpsSchema} {
 		var m map[string]any

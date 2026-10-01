@@ -95,9 +95,9 @@ var (
 	Props = []string{"position.x", "position.y", "position.z", "rotation.x", "rotation.y", "rotation.z",
 		"scale", "scale.x", "scale.y", "scale.z"}
 	Interps     = []string{"linear", "smooth", "step"}
-	Eyes        = []string{"neutral", "happy", "sleepy", "surprised", "angry", "love", "closed"}
-	Mouths      = []string{"neutral", "smile", "open", "frown", "o"}
-	EffectTypes = []string{"hearts", "sparkles", "sweat", "zzz", "question", "exclaim"}
+	Eyes        = []string{"neutral", "happy", "sleepy", "surprised", "angry", "love", "closed", "pain"}
+	Mouths      = []string{"neutral", "smile", "open", "frown", "o", "wavy"}
+	EffectTypes = []string{"hearts", "sparkles", "sweat", "zzz", "question", "exclaim", "notes"}
 	Targets     = []string{"generic", "blob", "cat", "chick"}
 )
 

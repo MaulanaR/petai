@@ -63,7 +63,7 @@ export class PetBehavior {
       this.clampToBounds();
       this.anchor = { ...this.pos };
     }
-    if (changed && !['dragged', 'sleep'].includes(this.state)) {
+    if (changed && !['dragged', 'sleep', 'activity'].includes(this.state)) {
       if (mode === 'ground' && !this.supported()) this.enter('falling');
       else this.enter('idle');
     }
@@ -183,19 +183,20 @@ export class PetBehavior {
 
   setAway(away) {
     this.away = away;
+    if (this.state === 'activity') return; // finish the scene first; afterReact() puts it to sleep
     if (away && !['dragged', 'falling', 'hop'].includes(this.state)) this.enter('sleep');
     if (!away && this.state === 'sleep') this.react('surprised');
   }
 
   react(anim) {
-    if (['dragged', 'falling', 'hop'].includes(this.state)) return;
+    if (['dragged', 'falling', 'hop', 'activity'].includes(this.state)) return;
     if (!this.player.has(anim)) return;
     this.enter('react', { anim });
   }
 
   talk(seconds, anim) {
     this.talkUntil = this.time + seconds;
-    if (['dragged', 'falling', 'hop'].includes(this.state)) return;
+    if (['dragged', 'falling', 'hop', 'activity'].includes(this.state)) return;
     this.enter('talk', { anim: anim && this.player.has(anim) ? anim : null });
   }
 
@@ -270,7 +271,7 @@ export class PetBehavior {
         if (this.mode === 'free') this.drift(dt * 0.3);
         break;
     }
-    if (this.mode === 'stay' && this.anchor && this.state !== 'dragged') {
+    if (this.mode === 'stay' && this.anchor && this.state !== 'dragged' && this.state !== 'activity') {
       this.pos.x += (this.anchor.x - this.pos.x) * Math.min(1, dt * 8);
       this.pos.y += (this.anchor.y - this.pos.y) * Math.min(1, dt * 8);
     }
@@ -279,9 +280,11 @@ export class PetBehavior {
   }
 
   decide() {
+    // Now and then do something fun with props (football, basketball, golf, toilet…).
+    if (this.onRandomActivity && Math.random() < 0.14 && this.onRandomActivity()) return;
     if (this.mode === 'stay') {
       const r = Math.random();
-      if (r < 0.35) this.enter('react', { anim: 'look_around' });
+      if (r < 0.35) this.enter('react', { anim: pick(['look_around', 'look_around', 'relieved', 'wave']) });
       else if (r < 0.55) this.enter('sit');
       else this.enter('idle');
       return;
@@ -315,7 +318,7 @@ export class PetBehavior {
       if (Math.abs(tx - this.pos.x) > 30) return this.enter('walk', { target: { x: tx, y: this.pos.y } });
     }
     if (r < 0.8) return this.enter('sit');
-    this.enter('react', { anim: pick(['look_around', 'look_around', 'jump', 'wave']) });
+    this.enter('react', { anim: pick(['look_around', 'look_around', 'jump', 'wave', 'relieved', 'happy_bounce']) });
   }
 
   updateWalk(dt) {

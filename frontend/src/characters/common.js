@@ -118,8 +118,12 @@ function buildEye(eyeSlot, size, side) {
   brow.rotation.z = Math.PI / 2 + 0.45 * side;
   brow.position.set(0, size * 1.35, 0.01);
 
-  blink.add(happy, closed, heart, brow);
-  return { blink, pupil, dot, happy, closed, heart, brow };
+  // "pain": squeezed > < eyes (tip points toward the nose)
+  const pts = [[0.55, 0.6], [-0.5, 0], [0.55, -0.6]].map(([x, y]) => new THREE.Vector3(x * size * side, y * size, 0));
+  const pain = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.05), 16, size * 0.17, 6, false), inkMat);
+
+  blink.add(happy, closed, heart, brow, pain);
+  return { blink, pupil, dot, happy, closed, heart, brow, pain };
 }
 
 function buildMouth(mouthSlot, size, beak) {
@@ -153,6 +157,13 @@ function buildMouth(mouthSlot, size, beak) {
   variants.o = new THREE.Mesh(new THREE.RingGeometry(size * 0.3, size * 0.55, 20), inkMat);
   variants.neutral = new THREE.Mesh(new THREE.CapsuleGeometry(size * 0.16, size * 0.8, 4, 8), inkMat);
   variants.neutral.rotation.z = Math.PI / 2;
+  // "wavy": queasy squiggle
+  const wave = [];
+  for (let i = 0; i <= 12; i++) {
+    const x = -1 + (i / 12) * 2;
+    wave.push(new THREE.Vector3(x * size * 1.05, Math.sin((i * Math.PI) / 3) * size * 0.22, 0));
+  }
+  variants.wavy = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(wave), 32, size * 0.13, 6, false), inkMat);
   for (const v of Object.values(variants)) mouthSlot.add(v);
   return variants;
 }
@@ -193,6 +204,7 @@ export function buildFace(parent, opts) {
       E.closed.visible = eyes === 'closed';
       E.heart.visible = eyes === 'love';
       E.brow.visible = eyes === 'angry';
+      E.pain.visible = eyes === 'pain';
       const s = eyes === 'surprised' ? 1.3 : 1;
       E.dot.scale.set(0.82 * s, (eyes === 'sleepy' ? 0.38 : 1.08) * s, 0.35);
       E.dot.position.y = eyes === 'sleepy' ? -opts.eyeSize * 0.3 : 0;

@@ -27,6 +27,7 @@ html, body {
 #app > * { pointer-events: auto; }
 
 .pet-canvas {
+  z-index: 1;
   position: absolute;
   left: 0;
   top: 0;
@@ -37,7 +38,8 @@ html, body {
 .pet-canvas:active { cursor: grabbing; }
 
 /* ---------- effects ---------- */
-.fx-layer { position: absolute; inset: 0; pointer-events: none !important; }
+.stage-canvas { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none !important; }
+.fx-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none !important; }
 .fx {
   position: absolute;
   font-weight: 800;
@@ -67,6 +69,7 @@ html, body {
 
 /* ---------- bubble ---------- */
 .bubble {
+  z-index: 4;
   position: absolute;
   left: 0;
   top: 0;
@@ -136,6 +139,7 @@ html, body {
 
 /* ---------- menu ---------- */
 .menu {
+  z-index: 5;
   position: absolute; left: 0; top: 0; min-width: 220px; padding: 6px;
   background: var(--paper); border: 2.5px solid var(--ink); border-radius: 16px;
   box-shadow: 3px 4px 0 var(--ink); font-size: 14px; font-weight: 600;
@@ -158,6 +162,7 @@ html, body {
 
 /* ---------- settings ---------- */
 .settings {
+  z-index: 6;
   position: absolute; left: calc(50% - 330px); top: calc(50% - 280px); width: 660px; height: 560px;
   background: var(--paper); border: 3px solid var(--ink); border-radius: 22px 24px 21px 25px;
   box-shadow: 5px 6px 0 var(--ink); display: flex; flex-direction: column; overflow: hidden;

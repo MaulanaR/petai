@@ -1,0 +1,12 @@
+{ "name": "throw", "description": "crouches, jumps and shoots a ball over the head with both arms", "tags": ["throw", "shoot", "basketball", "sport"], "target": "generic",
+  "duration": 0.9, "loop": false,
+  "tracks": [
+    { "slot": "body", "prop": "scale", "times": [0, 0.2, 0.42, 0.75, 0.9], "values": [[1, 1, 1], [1.15, 0.85, 1.15], [0.92, 1.12, 0.92], [1.08, 0.93, 1.08], [1, 1, 1]], "interp": "smooth" },
+    { "slot": "root", "prop": "position.y", "times": [0, 0.2, 0.45, 0.75, 0.9], "values": [0, -0.04, 0.35, 0, 0], "interp": "smooth" },
+    { "slot": "armL", "prop": "rotation.z", "times": [0, 0.2, 0.42, 0.6, 0.9], "values": [0, 0.5, 2.7, 2.2, 0], "interp": "smooth" },
+    { "slot": "armR", "prop": "rotation.z", "times": [0, 0.2, 0.42, 0.6, 0.9], "values": [0, -0.5, -2.7, -2.2, 0], "interp": "smooth" },
+    { "slot": "head", "prop": "rotation.x", "times": [0, 0.3, 0.6, 0.9], "values": [0, -0.25, -0.2, 0], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "neutral", "mouth": "o" }, { "t": 0.45, "eyes": "happy", "mouth": "open" }],
+  "effects": []
+}

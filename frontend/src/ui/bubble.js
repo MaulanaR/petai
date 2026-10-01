@@ -55,7 +55,8 @@ export class Bubble {
     this.setThinking(false);
     if (!this.chatOpen) this.userEl.style.display = 'none';
     this.type(text || '');
-    this.tipEl.textContent = suggestion ? '💡 ' + suggestion : '';
+    const hasIcon = suggestion && /^\p{Extended_Pictographic}/u.test(suggestion);
+    this.tipEl.textContent = suggestion ? (hasIcon ? suggestion : '💡 ' + suggestion) : '';
     this.tipEl.style.display = suggestion ? 'block' : 'none';
     const dur = seconds ?? Math.min(14, 4 + ((text || '').length + (suggestion || '').length) / 14);
     this.hideAt = this.chatOpen ? 0 : performance.now() + dur * 1000;

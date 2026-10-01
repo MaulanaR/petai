@@ -654,6 +654,16 @@ func (d debugBackend) Play(name string) error {
 
 func (d debugBackend) Memories() (any, error) { return d.a.ListMemories() }
 
+func (d debugBackend) Activity(name string) error {
+	for _, a := range brain.Activities {
+		if a == name {
+			d.a.emit("pet:activity", name)
+			return nil
+		}
+	}
+	return errors.New("activity must be one of football|basketball|golf|toilet")
+}
+
 func (d debugBackend) OpenUI(what string) error {
 	switch what {
 	case "settings", "chat", "menu":

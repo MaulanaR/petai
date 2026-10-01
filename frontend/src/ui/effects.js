@@ -7,6 +7,7 @@ const GLYPHS = {
   zzz: ['z', '#6c63ff', 3],
   question: ['?', '#2b2540', 1],
   exclaim: ['!', '#ff5d3d', 1],
+  notes: ['♪', '#6c63ff', 3],
 };
 
 export class Effects {

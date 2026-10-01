@@ -1,0 +1,13 @@
+{ "name": "dribble", "description": "bounces a ball with one hand, bobbing to the rhythm", "tags": ["dribble", "basketball", "sport"], "target": "generic",
+  "duration": 0.56, "loop": true,
+  "tracks": [
+    { "slot": "armR", "prop": "rotation.z", "times": [0, 0.56], "values": [-0.7, -0.7], "interp": "linear" },
+    { "slot": "armR", "prop": "rotation.x", "times": [0, 0.28, 0.56], "values": [-0.3, 0.45, -0.3], "interp": "smooth" },
+    { "slot": "root", "prop": "position.y", "times": [0, 0.28, 0.56], "values": [0, -0.04, 0], "interp": "smooth" },
+    { "slot": "body", "prop": "scale", "times": [0, 0.28, 0.56], "values": [[1, 1, 1], [1.04, 0.96, 1.04], [1, 1, 1]], "interp": "smooth" },
+    { "slot": "head", "prop": "rotation.x", "times": [0, 0.28, 0.56], "values": [0.1, 0.18, 0.1], "interp": "smooth" },
+    { "slot": "legL", "prop": "rotation.x", "times": [0, 0.56], "values": [-0.25, -0.25], "interp": "linear" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "neutral", "mouth": "smile" }],
+  "effects": []
+}

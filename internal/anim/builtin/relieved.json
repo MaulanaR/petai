@@ -1,0 +1,12 @@
+{ "name": "relieved", "description": "big relieved sigh: stretches up, then relaxes happily", "tags": ["relieved", "relax", "happy"], "target": "generic",
+  "duration": 1.6, "loop": false,
+  "tracks": [
+    { "slot": "body", "prop": "scale", "times": [0, 0.5, 1.0, 1.6], "values": [[1, 1, 1], [0.94, 1.12, 0.94], [1.06, 0.94, 1.06], [1, 1, 1]], "interp": "smooth" },
+    { "slot": "armL", "prop": "rotation.z", "times": [0, 0.5, 1.0, 1.6], "values": [0, 2.4, 0.3, 0], "interp": "smooth" },
+    { "slot": "armR", "prop": "rotation.z", "times": [0, 0.5, 1.0, 1.6], "values": [0, -2.4, -0.3, 0], "interp": "smooth" },
+    { "slot": "head", "prop": "rotation.x", "times": [0, 0.5, 1.0, 1.6], "values": [0, -0.25, 0.05, 0], "interp": "smooth" },
+    { "slot": "root", "prop": "position.y", "times": [0, 0.5, 1.0, 1.6], "values": [0, 0.08, -0.02, 0], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "closed", "mouth": "o" }, { "t": 0.9, "eyes": "happy", "mouth": "smile" }],
+  "effects": [{ "t": 0.7, "type": "sparkles" }]
+}

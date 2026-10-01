@@ -20,6 +20,8 @@
 | Karakter & animasi | Klik · elus · seret |
 |---|---|
 | <img src="docs/demo-characters.gif" width="360" alt="Tiga karakter"> | <img src="docs/demo-interact.gif" width="400" alt="Interaksi"> |
+| **"Mochi, joget dong!"** — gerakan dirancang AI | **Aktivitas acak:** mules → toilet 🚽 |
+| <img src="docs/act-dance.gif" width="300" alt="Joget hasil rancangan AI"> | <img src="docs/act-toilet.gif" width="360" alt="Toilet"> |
 
 ---
 
@@ -29,6 +31,7 @@
 - [Instalasi](#instalasi)
 - [Mulai cepat (5 menit)](#mulai-cepat-5-menit)
 - [Cara berinteraksi](#cara-berinteraksi)
+- [Aktivitas & perintah gerakan](#aktivitas--perintah-gerakan)
 - [Mode gerak](#mode-gerak)
 - [Menghubungkan AI (BYOK)](#menghubungkan-ai-byok)
 - [Kapan pet berkomentar](#kapan-pet-berkomentar)
@@ -51,8 +54,10 @@
 - **Peka aktivitas (opsional)** — pet bisa melihat aplikasi & judul jendela yang aktif lalu memberi
   komentar dan saran yang relevan; bisa juga screenshot ke model vision (izin terpisah).
 - **Ingat kebiasaanmu** — memori lokal (kebiasaan, preferensi, tujuan) yang bisa kamu lihat & hapus.
-- **Gerakan buatan AI** — kalau tidak ada animasi yang cocok, AI merancang gerakan baru (JSON, bukan kode),
-  divalidasi, disimpan lokal, lalu dipakai ulang tanpa generate ulang.
+- **Bisa disuruh** — "joget dong", "salto", "push up"… Kalau gerakannya belum ada, AI merancangnya
+  (JSON keyframe, bukan kode), divalidasi, disimpan lokal, lalu dipakai ulang tanpa generate ulang.
+- **Hidup sendiri** — sesekali main ⚽ bola, 🏀 basket, ⛳ golf, atau tiba-tiba mules lalu muncul 🚽 toilet
+  dan dia masuk ke dalamnya. Juga bisa dipanggil lewat menu atau chat ("main bola yuk!").
 - **Sopan** — sembunyi otomatis saat game/presentasi/fullscreen, tidak pernah mencuri fokus keyboard,
   jumlah komentar per jam bisa diatur (0 = hanya saat diajak ngobrol).
 
@@ -86,12 +91,44 @@ Butuh **Windows 10/11 64-bit**. Unduh dari [Releases](https://github.com/Maulana
 | **Klik ganda** pet | Buka chat. Ketik lalu **Enter**; **Esc** untuk menutup |
 | **Seret** pet | Pet terangkat & menggantung; lepas → jatuh (mode jalan) atau pindah posisi (mode diam/melayang). Bisa dilempar! |
 | **Gosok kursor** di atas pet | Dielus → mata hati & ❤️ |
-| **Klik kanan** pet | Menu cepat: chat, tidur/bangun, mode gerak, ganti karakter, pengaturan, sembunyikan 1 jam, keluar |
+| **Klik kanan** pet | Menu cepat: chat, tidur/bangun, mode gerak, **main ⚽🏀⛳🚽**, ganti karakter, pengaturan, sembunyikan 1 jam, keluar |
 | **Ikon tray** | Tampilkan/sembunyikan, chat, pengaturan, *Pause pengamatan*, sembunyikan 1 jam, keluar |
 | **`Ctrl+Alt+P`** | Buka chat dari mana saja |
 
 Pet juga punya kehidupan sendiri: berkedip, menatap kursor, jalan-jalan, duduk, dan **tidur** saat kamu
 tidak menyentuh PC lebih dari 5 menit — lalu bangun menyapa saat kamu kembali.
+
+## Aktivitas & perintah gerakan
+
+| ⚽ Sepak bola | 🏀 Basket |
+|---|---|
+| <img src="docs/act-football.gif" width="390" alt="Sepak bola"> | <img src="docs/act-basketball.gif" width="300" alt="Basket"> |
+| **⛳ Golf** | **🚽 Toilet** |
+| <img src="docs/act-golf.gif" width="390" alt="Golf"> | <img src="docs/act-toilet.gif" width="300" alt="Toilet"> |
+
+**Aktivitas** — adegan mini dengan properti 3D yang muncul lalu hilang:
+
+| Aktivitas | Yang terjadi |
+|---|---|
+| ⚽ Sepak bola | Bola jatuh memantul, pet mengejar & menendang beberapa kali, tendangan akhir → "GOOOL!" |
+| 🏀 Basket | Ring muncul, pet dribel lalu menembak — kadang meleset dan mencoba lagi → "Swish~" |
+| ⛳ Golf | Pet memegang stik, bendera muncul di kejauhan, pukulan → hampir masuk → putt → "Masuk lubang!" (kadang *hole in one*) |
+| 🚽 Toilet | Ekspresi mules (> <, keringat) → toilet kayu muncul → pet masuk, pintu tertutup, asap bau mengepul → keluar lega ✨ |
+
+Cara memicunya:
+- **Otomatis** — sesekali saat pet sedang santai, kira-kira tiap 3–8 menit (makin tinggi *Seberapa aktif
+  berkeliaran*, makin sering).
+- **Klik kanan pet → Main** → pilih ⚽ 🏀 ⛳ 🚽.
+- **Lewat chat** — "main bola yuk", "coba main golf", "kamu kebelet ya?" (butuh AI).
+
+Menyeret/menekan pet di tengah aktivitas akan menghentikannya. Di mode *Diam*, pet kembali berjalan ke
+tempatnya setelah selesai; di mode *Melayang*, ia turun dulu ke lantai.
+
+**Perintah gerakan lewat chat** — minta apa saja: "joget dong", "salto ke belakang", "push up", "muter-muter".
+- Kalau gerakannya sudah ada di pustaka, pet langsung melakukannya.
+- Kalau belum, AI merancang gerakan baru (bubble menampilkan *🎵 lagi latihan gerakan baru…*), lalu pet
+  langsung memperagakannya. Lama merancang tergantung model (umumnya 10–60 detik), **cukup sekali** —
+  gerakan tersimpan di *Pengaturan → 🎞️ Animasi* dan berikutnya langsung dipakai.
 
 ## Mode gerak
 
@@ -156,7 +193,7 @@ Cek koneksi tanpa membuka pet (butuh Go): `go run ./cmd/petai-check -provider op
 - **Memori** (*Pengaturan → 📒 Memori*): hal yang pet pelajari tentangmu dari obrolan & pola pemakaian
   (mis. jam mulai kerja, aplikasi favorit). Bisa diedit, dihapus, ditambah manual, atau *Lupakan semua*.
   Sehari sekali pet merangkum kebiasaan dari statistik lokal.
-- **Animasi** (*Pengaturan → 🎞️ Animasi*): 13 gerakan bawaan + gerakan buatan AI. Klik ▶ untuk
+- **Animasi** (*Pengaturan → 🎞️ Animasi*): 19 gerakan bawaan + gerakan buatan AI. Klik ▶ untuk
   memutar, ⧉ untuk menyalin JSON, 🗑 untuk menghapus, atau impor JSON gerakan buatanmu sendiri.
   Format gerakan didokumentasikan di [`qa/CONTRACT.md`](qa/CONTRACT.md#animationspec-dsl).
 
@@ -211,12 +248,12 @@ internal/overlay           Win32: overlay transparan, click-through dinamis, fok
 internal/watcher           Jendela aktif, idle, DND/fullscreen, screenshot, sensor & blocklist
 internal/brain             Kapan pet bicara, prompt, structured output, animasi & memori
 internal/ai                Provider Anthropic & OpenAI(-compatible)
-internal/anim              DSL animasi, validasi, pustaka lokal + 13 animasi bawaan
+internal/anim              DSL animasi, validasi, pustaka lokal + 19 animasi bawaan
 internal/store             SQLite: aktivitas, memori, chat
 internal/config, secrets   config.json & Windows Credential Manager
 internal/tray, sys         Ikon tray, autostart, hotkey
 internal/debugapi          API QA lokal (hanya aktif bila PETAI_DEBUG_ADDR diset)
-frontend/src               three.js: karakter, player DSL, behavior, bubble, menu, pengaturan
+frontend/src               three.js: karakter, player DSL, behavior, aktivitas + properti, bubble, menu, pengaturan
 qa/                        Kontrak uji + harness QA (mock AI, skrip PowerShell)
 ```
 

@@ -1,0 +1,14 @@
+{ "name": "golf_swing", "description": "golf swing: backswing, strike through the ball, follow-through", "tags": ["golf", "swing", "sport"], "target": "generic",
+  "duration": 1.4, "loop": false,
+  "tracks": [
+    { "slot": "armL", "prop": "rotation.z", "times": [0, 0.5, 0.78, 1.0, 1.4], "values": [-0.35, 1.5, -0.35, -1.7, -0.35], "interp": "smooth" },
+    { "slot": "armR", "prop": "rotation.z", "times": [0, 0.5, 0.78, 1.0, 1.4], "values": [0.35, 1.9, 0.35, -1.3, 0.35], "interp": "smooth" },
+    { "slot": "body", "prop": "rotation.y", "times": [0, 0.5, 0.78, 1.0, 1.4], "values": [0, 0.55, 0, -0.6, 0], "interp": "smooth" },
+    { "slot": "body", "prop": "rotation.z", "times": [0, 0.5, 0.78, 1.0, 1.4], "values": [0, 0.1, 0, -0.12, 0], "interp": "smooth" },
+    { "slot": "head", "prop": "rotation.x", "times": [0, 0.7, 0.85, 1.1, 1.4], "values": [0.15, 0.25, 0.1, -0.2, 0], "interp": "smooth" },
+    { "slot": "head", "prop": "rotation.y", "times": [0, 0.85, 1.1, 1.4], "values": [0, 0, -0.45, 0], "interp": "smooth" },
+    { "slot": "root", "prop": "position.y", "times": [0, 0.5, 0.78, 1.4], "values": [0, 0.02, -0.03, 0], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "neutral", "mouth": "neutral" }, { "t": 0.78, "eyes": "surprised", "mouth": "o" }, { "t": 1.2, "eyes": "happy", "mouth": "smile" }],
+  "effects": []
+}

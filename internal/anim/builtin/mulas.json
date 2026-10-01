@@ -1,0 +1,14 @@
+{ "name": "mulas", "description": "stomach ache: trembling, knees together, hands on belly, pained face", "tags": ["mulas", "stomach", "toilet", "pain"], "target": "generic",
+  "duration": 1.2, "loop": true,
+  "tracks": [
+    { "slot": "root", "prop": "position.x", "times": [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2], "values": [0, 0.02, -0.02, 0.02, -0.02, 0.015, -0.015, 0.02, -0.02, 0.02, -0.02, 0.015, 0], "interp": "linear" },
+    { "slot": "body", "prop": "scale", "times": [0, 0.6, 1.2], "values": [[1.03, 0.96, 1.03], [0.98, 1.02, 0.98], [1.03, 0.96, 1.03]], "interp": "smooth" },
+    { "slot": "legL", "prop": "rotation.z", "times": [0, 1.2], "values": [0.18, 0.18], "interp": "linear" },
+    { "slot": "legR", "prop": "rotation.z", "times": [0, 1.2], "values": [-0.18, -0.18], "interp": "linear" },
+    { "slot": "armL", "prop": "rotation.z", "times": [0, 0.6, 1.2], "values": [-0.55, -0.7, -0.55], "interp": "smooth" },
+    { "slot": "armR", "prop": "rotation.z", "times": [0, 0.6, 1.2], "values": [0.55, 0.7, 0.55], "interp": "smooth" },
+    { "slot": "head", "prop": "rotation.x", "times": [0, 0.6, 1.2], "values": [0.15, 0.22, 0.15], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "pain", "mouth": "wavy" }],
+  "effects": [{ "t": 0.2, "type": "sweat" }]
+}
