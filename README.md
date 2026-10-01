@@ -10,6 +10,10 @@
 </p>
 
 <p align="center">
+  Dibuat oleh <a href="https://maulanar.my.id"><b>Maulana Rahman</b></a> · <a href="https://maulanar.my.id">maulanar.my.id</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/MaulanaR/petai/releases/latest"><b>⬇️ Unduh rilis terbaru</b></a>
 </p>
 
@@ -259,3 +263,10 @@ qa/                        Kontrak uji + harness QA (mock AI, skrip PowerShell)
 
 Variabel lingkungan untuk pengujian (`PETAI_DATA_DIR`, `PETAI_DEBUG_ADDR`, `PETAI_FAST`, override base URL
 & key) didokumentasikan di [`qa/CONTRACT.md`](qa/CONTRACT.md).
+
+## Pencipta
+
+**PetAI** diciptakan oleh **Maulana Rahman** — 🌐 [maulanar.my.id](https://maulanar.my.id) ·
+🐙 [@MaulanaR](https://github.com/MaulanaR)
+
+© 2026 Maulana Rahman. Jika kamu memakai atau mengembangkan PetAI, mohon cantumkan kredit ke pencipta.

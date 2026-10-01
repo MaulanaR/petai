@@ -1,4 +1,5 @@
 import { api, call } from '../bridge.js';
+import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { CHARACTER_LIST } from '../characters/index.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -108,7 +109,7 @@ export class Settings {
     const tabs = TABS.map(([id, label]) => `<button class="st-tab ${id === this.tab ? 'on' : ''}" data-tab="${id}">${label}</button>`).join('');
     this.el.innerHTML = `
       <div class="st-head">
-        <div class="st-title">PetAI <span>v${esc(this.version)}</span></div>
+        <div class="st-title">PetAI <span>v${esc(this.version)} · oleh <a href="#" class="credit-link" data-url="https://maulanar.my.id">Maulana Rahman</a></span></div>
         <button class="st-close" title="Tutup">×</button>
       </div>
       <div class="st-body">
@@ -257,7 +258,12 @@ export class Settings {
           </div>
           <label class="switch"><input type="checkbox" data-k="general.debug" ${c.general.debug ? 'checked' : ''}><span></span> Log debug</label>
           <p class="note">Pintasan: <b>Ctrl+Alt+P</b> buka chat. Klik kanan pet untuk menu cepat. Ikon tray untuk tampilkan/sembunyikan.</p>
-          <button class="btn ghost" data-act="open-data">Buka folder data</button>`;
+          <button class="btn ghost" data-act="open-data">Buka folder data</button>
+          <div class="credit">
+            <div class="credit-name">🫧 PetAI dibuat dengan ❤️ oleh <b>Maulana Rahman</b></div>
+            <a href="#" class="credit-link" data-url="https://maulanar.my.id">maulanar.my.id</a> ·
+            <a href="#" class="credit-link" data-url="https://github.com/MaulanaR/petai">github.com/MaulanaR/petai</a>
+          </div>`;
     }
     return '';
   }
@@ -291,6 +297,7 @@ export class Settings {
     root.querySelectorAll('[data-char]').forEach((b) => (b.onclick = () => this.change((c) => { c.pet.character = b.dataset.char; }, true)));
     root.querySelectorAll('[data-mode]').forEach((b) => (b.onclick = () => this.change((c) => { c.movement.mode = b.dataset.mode; c.movement.anchorX = -1; c.movement.anchorY = -1; }, true)));
     root.querySelectorAll('[data-act]').forEach((b) => (b.onclick = () => this.action(b.dataset.act, b)));
+    this.el.querySelectorAll('.credit-link').forEach((a) => (a.onclick = (e) => { e.preventDefault(); BrowserOpenURL(a.dataset.url); }));
     if (this.tab === 'memory') this.loadMemories();
     if (this.tab === 'anims') this.loadAnims();
   }

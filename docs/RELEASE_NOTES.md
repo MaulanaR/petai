@@ -26,3 +26,6 @@ Windows 10/11 64-bit. Aplikasi belum ditandatangani (unsigned): jika SmartScreen
 - Privasi: default tidak mengamati apa pun; sensor judul jendela; daftar blokir (password manager, perbankan, chat, incognito…); sembunyi otomatis saat fullscreen.
 
 Panduan lengkap: lihat [README](https://github.com/MaulanaR/petai#readme).
+
+---
+Dibuat oleh **Maulana Rahman** — [maulanar.my.id](https://maulanar.my.id)

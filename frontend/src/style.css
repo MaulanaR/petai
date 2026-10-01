@@ -246,6 +246,11 @@ html, body {
 .bar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bar i { display: block; height: 10px; background: var(--accent); border: 1.5px solid var(--ink); border-radius: 6px; }
 .bar em { font-style: normal; color: var(--muted); }
+.credit { margin-top: 18px; padding-top: 12px; border-top: 2px dashed var(--ink); font-size: 13px; color: var(--muted); }
+.credit-name { color: var(--ink); margin-bottom: 4px; }
+.credit-link { color: #3b6fd8; font-weight: 700; text-decoration: none; cursor: pointer; }
+.credit-link:hover { text-decoration: underline; }
+.st-title .credit-link { color: var(--ink); font-family: var(--font); }
 .st-toast {
   position: absolute; left: 50%; bottom: 12px; transform: translate(-50%, 20px); opacity: 0;
   background: var(--ink); color: #fff; padding: 7px 14px; border-radius: 12px; font-weight: 600; font-size: 13px;

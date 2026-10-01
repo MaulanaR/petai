@@ -29,7 +29,7 @@ func Stop() { systray.Quit() }
 func onReady(icon []byte, a Actions) {
 	systray.SetIcon(icon)
 	systray.SetTitle("PetAI")
-	systray.SetTooltip("PetAI — desktop pet")
+	systray.SetTooltip("PetAI — desktop pet by Maulana Rahman")
 	systray.SetOnClick(func(menu systray.IMenu) { _ = menu.ShowMenu() })
 	systray.SetOnRClick(func(menu systray.IMenu) { _ = menu.ShowMenu() })
 	systray.SetOnDClick(func(systray.IMenu) { a.OpenSettings() })
