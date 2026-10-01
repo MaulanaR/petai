@@ -1,0 +1,13 @@
+{ "name": "sit", "description": "sits down comfortably and relaxes", "tags": ["sit", "relax", "idle"], "target": "generic",
+  "duration": 3.0, "loop": true,
+  "tracks": [
+    { "slot": "root", "prop": "position.y", "times": [0, 3.0], "values": [-0.07, -0.07], "interp": "linear" },
+    { "slot": "body", "prop": "scale", "times": [0, 1.5, 3.0], "values": [[1.06, 0.92, 1.06], [1.08, 0.9, 1.08], [1.06, 0.92, 1.06]], "interp": "smooth" },
+    { "slot": "legL", "prop": "rotation.x", "times": [0, 3.0], "values": [-1.2, -1.2], "interp": "linear" },
+    { "slot": "legR", "prop": "rotation.x", "times": [0, 3.0], "values": [-1.2, -1.2], "interp": "linear" },
+    { "slot": "head", "prop": "rotation.z", "times": [0, 1.5, 3.0], "values": [0.05, -0.05, 0.05], "interp": "smooth" },
+    { "slot": "tail", "prop": "rotation.y", "times": [0, 1.5, 3.0], "values": [0.4, -0.4, 0.4], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "happy", "mouth": "smile" }],
+  "effects": []
+}

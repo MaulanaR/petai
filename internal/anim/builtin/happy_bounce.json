@@ -1,0 +1,11 @@
+{ "name": "happy_bounce", "description": "excited double bounce with sparkles", "tags": ["happy", "celebrate", "excited"], "target": "generic",
+  "duration": 1.2, "loop": false,
+  "tracks": [
+    { "slot": "root", "prop": "position.y", "times": [0, 0.2, 0.4, 0.6, 0.8, 1.2], "values": [0, 0.25, 0, 0.25, 0, 0], "interp": "smooth" },
+    { "slot": "body", "prop": "scale", "times": [0, 0.2, 0.4, 0.6, 0.8, 1.2], "values": [[1, 1, 1], [0.92, 1.1, 0.92], [1.12, 0.88, 1.12], [0.92, 1.1, 0.92], [1.12, 0.88, 1.12], [1, 1, 1]], "interp": "smooth" },
+    { "slot": "armL", "prop": "rotation.z", "times": [0, 0.2, 0.4, 0.6, 0.8, 1.2], "values": [0, 1.4, 0.6, 1.4, 0.6, 0], "interp": "smooth" },
+    { "slot": "armR", "prop": "rotation.z", "times": [0, 0.2, 0.4, 0.6, 0.8, 1.2], "values": [0, -1.4, -0.6, -1.4, -0.6, 0], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "happy", "mouth": "open" }],
+  "effects": [{ "t": 0.2, "type": "sparkles" }]
+}

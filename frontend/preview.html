@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PetAI Preview</title>
+  <style>
+    body { margin: 0; font-family: "Segoe UI", sans-serif; background: #f4efe6; color: #2b2540; }
+    header { padding: 12px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    header b { margin-right: 8px; }
+    button { border: 2px solid #2b2540; background: #fff; border-radius: 10px; padding: 4px 10px; cursor: pointer; font-weight: 600; }
+    button.on { background: #8fd3ff; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 0 16px 16px; }
+    .cell { background: #fff; border: 2.5px solid #2b2540; border-radius: 18px; position: relative; height: 340px; overflow: hidden; }
+    .cell span { position: absolute; left: 12px; top: 8px; font-weight: 700; }
+    canvas { position: absolute; left: 50%; top: 0; transform: translateX(-50%); }
+  </style>
+</head>
+<body>
+  <header><b>Preview animasi</b><span id="btns"></span></header>
+  <div class="grid" id="grid"></div>
+  <script type="module" src="./src/preview.js"></script>
+</body>
+</html>

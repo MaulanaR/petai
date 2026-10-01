@@ -1,0 +1,13 @@
+{ "name": "float", "description": "hovering in the air, softly bobbing with little flaps", "tags": ["float", "fly", "move"], "target": "generic",
+  "duration": 2.0, "loop": true,
+  "tracks": [
+    { "slot": "root", "prop": "position.y", "times": [0, 1.0, 2.0], "values": [0, 0.1, 0], "interp": "smooth" },
+    { "slot": "body", "prop": "rotation.z", "times": [0, 1.0, 2.0], "values": [0.05, -0.05, 0.05], "interp": "smooth" },
+    { "slot": "armL", "prop": "rotation.z", "times": [0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "values": [0.2, 0.7, 0.2, 0.7, 0.2, 0.7, 0.2, 0.7, 0.2], "interp": "smooth" },
+    { "slot": "armR", "prop": "rotation.z", "times": [0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "values": [-0.2, -0.7, -0.2, -0.7, -0.2, -0.7, -0.2, -0.7, -0.2], "interp": "smooth" },
+    { "slot": "legL", "prop": "rotation.x", "times": [0, 1.0, 2.0], "values": [0.2, 0.35, 0.2], "interp": "smooth" },
+    { "slot": "legR", "prop": "rotation.x", "times": [0, 1.0, 2.0], "values": [0.3, 0.15, 0.3], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "happy", "mouth": "smile" }],
+  "effects": []
+}

@@ -1,0 +1,11 @@
+{ "name": "jump", "description": "squash, leap up and land", "tags": ["jump", "happy", "energetic"], "target": "generic",
+  "duration": 1.0, "loop": false,
+  "tracks": [
+    { "slot": "root", "prop": "position.y", "times": [0, 0.15, 0.45, 0.8, 1.0], "values": [0, -0.05, 0.6, 0, 0], "interp": "smooth" },
+    { "slot": "body", "prop": "scale", "times": [0, 0.15, 0.45, 0.8, 1.0], "values": [[1, 1, 1], [1.18, 0.8, 1.18], [0.9, 1.15, 0.9], [1.15, 0.85, 1.15], [1, 1, 1]], "interp": "smooth" },
+    { "slot": "armL", "prop": "rotation.z", "times": [0, 0.45, 1.0], "values": [0, 1.2, 0], "interp": "smooth" },
+    { "slot": "armR", "prop": "rotation.z", "times": [0, 0.45, 1.0], "values": [0, -1.2, 0], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "happy", "mouth": "open" }, { "t": 0.9, "eyes": "neutral", "mouth": "smile" }],
+  "effects": []
+}

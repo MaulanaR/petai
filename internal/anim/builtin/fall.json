@@ -1,0 +1,12 @@
+{ "name": "fall", "description": "falling through the air, flailing", "tags": ["fall", "drop"], "target": "generic",
+  "duration": 0.5, "loop": true,
+  "tracks": [
+    { "slot": "body", "prop": "scale", "times": [0, 0.5], "values": [[0.92, 1.1, 0.92], [0.92, 1.1, 0.92]], "interp": "linear" },
+    { "slot": "armL", "prop": "rotation.z", "times": [0, 0.125, 0.25, 0.375, 0.5], "values": [1.0, 2.0, 1.0, 2.0, 1.0], "interp": "smooth" },
+    { "slot": "armR", "prop": "rotation.z", "times": [0, 0.125, 0.25, 0.375, 0.5], "values": [-2.0, -1.0, -2.0, -1.0, -2.0], "interp": "smooth" },
+    { "slot": "legL", "prop": "rotation.x", "times": [0, 0.25, 0.5], "values": [0.5, -0.5, 0.5], "interp": "smooth" },
+    { "slot": "legR", "prop": "rotation.x", "times": [0, 0.25, 0.5], "values": [-0.5, 0.5, -0.5], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "surprised", "mouth": "open" }],
+  "effects": []
+}

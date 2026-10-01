@@ -1,0 +1,14 @@
+{ "name": "walk", "description": "bouncy walk cycle", "tags": ["walk", "move"], "target": "generic",
+  "duration": 0.6, "loop": true,
+  "tracks": [
+    { "slot": "root", "prop": "position.y", "times": [0, 0.15, 0.3, 0.45, 0.6], "values": [0, 0.06, 0, 0.06, 0], "interp": "smooth" },
+    { "slot": "body", "prop": "rotation.z", "times": [0, 0.3, 0.6], "values": [0.07, -0.07, 0.07], "interp": "smooth" },
+    { "slot": "legL", "prop": "rotation.x", "times": [0, 0.3, 0.6], "values": [0.6, -0.6, 0.6], "interp": "smooth" },
+    { "slot": "legR", "prop": "rotation.x", "times": [0, 0.3, 0.6], "values": [-0.6, 0.6, -0.6], "interp": "smooth" },
+    { "slot": "armL", "prop": "rotation.x", "times": [0, 0.3, 0.6], "values": [-0.5, 0.5, -0.5], "interp": "smooth" },
+    { "slot": "armR", "prop": "rotation.x", "times": [0, 0.3, 0.6], "values": [0.5, -0.5, 0.5], "interp": "smooth" },
+    { "slot": "tail", "prop": "rotation.y", "times": [0, 0.3, 0.6], "values": [0.3, -0.3, 0.3], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "neutral", "mouth": "smile" }],
+  "effects": []
+}

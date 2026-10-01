@@ -1,0 +1,12 @@
+{ "name": "idle", "description": "gentle breathing and tiny sway while standing", "tags": ["idle", "calm"], "target": "generic",
+  "duration": 2.4, "loop": true,
+  "tracks": [
+    { "slot": "body", "prop": "scale", "times": [0, 1.2, 2.4], "values": [[1, 1, 1], [1.03, 0.97, 1.03], [1, 1, 1]], "interp": "smooth" },
+    { "slot": "head", "prop": "rotation.z", "times": [0, 1.2, 2.4], "values": [0.03, -0.03, 0.03], "interp": "smooth" },
+    { "slot": "armL", "prop": "rotation.z", "times": [0, 1.2, 2.4], "values": [0, 0.08, 0], "interp": "smooth" },
+    { "slot": "armR", "prop": "rotation.z", "times": [0, 1.2, 2.4], "values": [0, -0.08, 0], "interp": "smooth" },
+    { "slot": "tail", "prop": "rotation.y", "times": [0, 1.2, 2.4], "values": [0.15, -0.15, 0.15], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "neutral", "mouth": "smile" }],
+  "effects": []
+}

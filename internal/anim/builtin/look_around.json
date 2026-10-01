@@ -1,0 +1,9 @@
+{ "name": "look_around", "description": "curiously looks left and right", "tags": ["curious", "look", "idle"], "target": "generic",
+  "duration": 2.4, "loop": false,
+  "tracks": [
+    { "slot": "head", "prop": "rotation.y", "times": [0, 0.4, 1.0, 1.4, 2.0, 2.4], "values": [0, 0.6, 0.6, -0.6, -0.6, 0], "interp": "smooth" },
+    { "slot": "body", "prop": "rotation.y", "times": [0, 0.4, 1.0, 1.4, 2.0, 2.4], "values": [0, 0.2, 0.2, -0.2, -0.2, 0], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "neutral", "mouth": "neutral" }, { "t": 2.2, "eyes": "happy", "mouth": "smile" }],
+  "effects": [{ "t": 1.0, "type": "question" }]
+}

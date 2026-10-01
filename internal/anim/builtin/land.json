@@ -1,0 +1,9 @@
+{ "name": "land", "description": "squashy landing on the ground", "tags": ["land", "drop"], "target": "generic",
+  "duration": 0.5, "loop": false,
+  "tracks": [
+    { "slot": "body", "prop": "scale", "times": [0, 0.12, 0.3, 0.5], "values": [[1, 1, 1], [1.3, 0.7, 1.3], [0.95, 1.06, 0.95], [1, 1, 1]], "interp": "smooth" },
+    { "slot": "root", "prop": "position.y", "times": [0, 0.12, 0.5], "values": [0, -0.04, 0], "interp": "smooth" }
+  ],
+  "expressions": [{ "t": 0, "eyes": "closed", "mouth": "o" }, { "t": 0.35, "eyes": "neutral", "mouth": "smile" }],
+  "effects": []
+}
